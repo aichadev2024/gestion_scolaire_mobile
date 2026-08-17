@@ -3,11 +3,12 @@ class ApiConstants {
   // Physical Phone Wi-Fi IP (Computer IP): 172.20.14.254
   // Emulator: 10.0.2.2
   // Web/Windows: localhost
+  static const String productionUrl = 'https://gestion-scolaire-backend-x0hy.onrender.com/api';
   static const String physicalPhoneUrl = 'http://172.20.14.254:8089/api';
   static const String emulatorUrl = 'http://10.0.2.2:8089/api';
   static const String localWebUrl = 'http://localhost:8089/api';
   
-  static const String baseUrl = physicalPhoneUrl;
+  static const String baseUrl = productionUrl;
 
   // Endpoints
   static const String login = '/auth/login';
