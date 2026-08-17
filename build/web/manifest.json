@@ -1,11 +1,11 @@
 {
-    "name": "gestion_scolaire_mobile",
-    "short_name": "gestion_scolaire_mobile",
+    "name": "Netaa École - Application Mobile",
+    "short_name": "Netaa École",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0f172a",
+    "theme_color": "#1e293b",
+    "description": "Application mobile Netaa École pour les parents, élèves et enseignants.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
