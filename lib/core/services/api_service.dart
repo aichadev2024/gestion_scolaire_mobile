@@ -9,15 +9,14 @@ class ApiService {
   static const String _keyCustomIp = 'custom_server_ip';
 
   static Future<String> getBaseUrl() async {
-    if (kIsWeb) return ApiConstants.localWebUrl;
     final prefs = await SharedPreferences.getInstance();
     final customIp = prefs.getString(_keyCustomIp);
     if (customIp != null && customIp.trim().isNotEmpty) {
       final ip = customIp.trim();
-      if (ip.startsWith('http')) return '$ip/api';
+      if (ip.startsWith('http')) return ip.endsWith('/api') ? ip : '$ip/api';
       return 'http://$ip:8089/api';
     }
-    return ApiConstants.physicalPhoneUrl;
+    return ApiConstants.productionUrl;
   }
 
   static Future<void> saveCustomIp(String ip) async {

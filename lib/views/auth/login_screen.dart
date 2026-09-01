@@ -5,6 +5,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../parent_eleve/parent_dashboard.dart';
+import '../parent_eleve/eleve_dashboard.dart';
 import '../enseignant/enseignant_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -74,6 +75,11 @@ class _LoginScreenState extends State<LoginScreen> {
             context,
             MaterialPageRoute(builder: (_) => const EnseignantDashboard()),
           );
+        } else if (role == 'ELEVE') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const EleveDashboard()),
+          );
         } else {
           Navigator.pushReplacement(
             context,
@@ -119,6 +125,11 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const EnseignantDashboard()),
+          );
+        } else if (role == 'ELEVE') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const EleveDashboard()),
           );
         } else {
           Navigator.pushReplacement(

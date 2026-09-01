@@ -3,6 +3,7 @@ import 'core/services/auth_service.dart';
 import 'core/theme/app_theme.dart';
 import 'views/vitrine/landing_vitrine_screen.dart';
 import 'views/parent_eleve/parent_dashboard.dart';
+import 'views/parent_eleve/eleve_dashboard.dart';
 import 'views/enseignant/enseignant_dashboard.dart';
 
 void main() {
@@ -72,6 +73,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     if (_role == 'ENSEIGNANT') {
       return const EnseignantDashboard();
+    }
+
+    if (_role == 'ELEVE') {
+      return const EleveDashboard();
     }
 
     return const ParentDashboard();
