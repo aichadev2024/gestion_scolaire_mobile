@@ -31,11 +31,20 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
       final user = await AuthService.getUserData();
       if (mounted) setState(() => _userData = user);
 
-      final parentUserId = user?['utilisateurId'] ?? user?['id'];
-      if (widget.eleveData == null && parentUserId != null) {
-        final res = await ApiService.get('/eleves/parent/$parentUserId');
-        if (res is List && res.isNotEmpty && mounted) {
-          setState(() => _fetchedChildData = res[0]);
+      final userId = user?['utilisateurId'] ?? user?['id'];
+      if (widget.eleveData == null && userId != null) {
+        try {
+          final res = await ApiService.get('/eleves/$userId');
+          if (res != null && res is Map<String, dynamic> && mounted) {
+            setState(() => _fetchedChildData = res);
+          }
+        } catch (_) {
+          try {
+            final resParent = await ApiService.get('/eleves/parent/$userId');
+            if (resParent is List && resParent.isNotEmpty && mounted) {
+              setState(() => _fetchedChildData = resParent[0]);
+            }
+          } catch (_) {}
         }
       }
     } catch (_) {
@@ -48,11 +57,11 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
   Widget build(BuildContext context) {
     final activeEleve = widget.eleveData ?? _fetchedChildData;
     final profil = activeEleve?['profil'];
-    final prenom = profil?['prenom'] ?? '—';
-    final nom = profil?['nom'] ?? '—';
-    final matricule = activeEleve?['matricule'] ?? '—';
-    final classe = activeEleve?['classeNom'] ?? 'Non affecté';
-    final photoUrl = profil?['photoUrl'];
+    final prenom = profil?['prenom'] ?? _userData?['prenom'] ?? 'Élève';
+    final nom = profil?['nom'] ?? _userData?['nom'] ?? '';
+    final matricule = activeEleve?['matricule'] ?? _userData?['matricule'] ?? 'LYC-2026';
+    final classe = activeEleve?['classeNom'] ?? _userData?['classeNom'] ?? 'Lycée';
+    final photoUrl = profil?['photoUrl'] ?? _userData?['photoUrl'];
     final etablissement = _userData?['etablissementNom'] ?? 'Établissement Scolaire';
 
     return SafeArea(
@@ -152,7 +161,7 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                               ? Image.network(photoUrl, fit: BoxFit.cover)
                               : Center(
                                   child: Text(
-                                    '${prenom[0]}${nom[0]}',
+                                    '${prenom.isNotEmpty ? prenom[0] : 'E'}${nom.isNotEmpty ? nom[0] : 'L'}',
                                     style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primaryGold, fontSize: 24),
                                   ),
                                 ),

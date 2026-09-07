@@ -4,6 +4,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../auth/login_screen.dart';
+import '../auth/change_password_dialog.dart';
 import 'prise_presence_screen.dart';
 import 'saisie_notes_screen.dart';
 import 'emploi_du_temps_enseignant_screen.dart';
@@ -103,14 +104,28 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.logout_rounded, color: AppTheme.accentRose),
-                    onPressed: () async {
-                      await AuthService.logout();
-                      if (mounted) {
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                      }
-                    },
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.key_rounded, color: AppTheme.primaryGold),
+                        tooltip: 'Modifier mot de passe',
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => const ChangePasswordDialog(),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.logout_rounded, color: AppTheme.accentRose),
+                        onPressed: () async {
+                          await AuthService.logout();
+                          if (mounted) {
+                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

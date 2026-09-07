@@ -5,6 +5,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../auth/login_screen.dart';
+import '../auth/change_password_dialog.dart';
 import 'carte_scolaire_screen.dart';
 import 'bulletins_screen.dart';
 import 'presences_screen.dart';
@@ -38,11 +39,18 @@ class _EleveDashboardState extends State<EleveDashboard> {
       final utilisateurId = user?['utilisateurId'] ?? user?['id'];
       if (utilisateurId != null) {
         try {
-          final res = await ApiService.get('/eleves/utilisateur/$utilisateurId');
+          final res = await ApiService.get('/eleves/$utilisateurId');
           if (res != null && res is Map<String, dynamic> && mounted) {
             setState(() => _eleveProfilData = res);
           }
-        } catch (_) {}
+        } catch (_) {
+          try {
+            final resParent = await ApiService.get('/eleves/parent/$utilisateurId');
+            if (resParent is List && resParent.isNotEmpty && mounted) {
+              setState(() => _eleveProfilData = resParent[0]);
+            }
+          } catch (_) {}
+        }
       }
     } catch (_) {
     } finally {
@@ -149,17 +157,31 @@ class _EleveDashboardState extends State<EleveDashboard> {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.logout_rounded, color: AppTheme.accentRose),
-                    onPressed: () async {
-                      await AuthService.logout();
-                      if (mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        );
-                      }
-                    },
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.key_rounded, color: AppTheme.primaryGold),
+                        tooltip: 'Modifier mot de passe',
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => const ChangePasswordDialog(),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.logout_rounded, color: AppTheme.accentRose),
+                        onPressed: () async {
+                          await AuthService.logout();
+                          if (mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

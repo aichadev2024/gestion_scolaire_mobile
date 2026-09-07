@@ -19,6 +19,7 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
   String _selectedPeriode = 'TRIMESTRE_1';
   bool _isLoading = true;
   BulletinModel? _bulletin;
+  Map<String, dynamic>? _userData;
 
   @override
   void initState() {
@@ -34,11 +35,39 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
     }
   }
 
+  String _getLevelCategory() {
+    final classeNom = _bulletin?.classeNom ?? _userData?['classeNom'] ?? '';
+    final text = classeNom.toLowerCase();
+    if (text.contains('lycée') || text.contains('lycee') || text.contains('10è') || text.contains('11è') || text.contains('12è') || text.contains('term') || text.contains('2nde') || text.contains('1ère s') || text.contains('1ère l') || text.contains('tse') || text.contains('tsexp') || text.contains('tseco') || text.contains('tss')) {
+      return 'LYCEE';
+    }
+    if (text.contains('collège') || text.contains('college') || text.contains('7è') || text.contains('8è') || text.contains('9è') || text.contains('6è')) {
+      return 'COLLEGE';
+    }
+    if (text.contains('maternelle') || text.contains('petite') || text.contains('moyenne') || text.contains('grande')) {
+      return 'MATERNELLE';
+    }
+    if (text.contains('primaire') || text.contains('1ère a') || text.contains('2ème a') || text.contains('3ème a') || text.contains('4ème a') || text.contains('5ème a') || text.contains('6ème a') || text.contains('cp') || text.contains('ce1') || text.contains('ce2') || text.contains('cm1') || text.contains('cm2')) {
+      return 'PRIMAIRE';
+    }
+    return 'LYCEE';
+  }
+
   Future<void> _fetchBulletin() async {
     setState(() => _isLoading = true);
     try {
       final userData = await AuthService.getUserData();
-      final targetEleveId = widget.eleveId ?? userData?['id'] ?? 1;
+      if (mounted) setState(() => _userData = userData);
+
+      final targetEleveId = widget.eleveId ?? userData?['id'] ?? userData?['utilisateurId'] ?? 1;
+
+      // Adjust period if default TRIMESTRE_1 is not allowed for PRIMAIRE/MATERNELLE
+      final cat = _getLevelCategory();
+      if ((cat == 'PRIMAIRE' || cat == 'MATERNELLE') && _selectedPeriode.startsWith('TRIMESTRE')) {
+        _selectedPeriode = 'COMPOSITION_1';
+      } else if (cat == 'LYCEE' && _selectedPeriode.startsWith('COMPOSITION')) {
+        _selectedPeriode = 'TRIMESTRE_1';
+      }
 
       // Call backend API for bulletin
       final data = await ApiService.get('/bulletins/eleve/$targetEleveId?periode=$_selectedPeriode&anneeScolaire=2026/2027');
@@ -60,6 +89,8 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cat = _getLevelCategory();
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -68,7 +99,7 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
           children: [
             Text('Bulletins & Relevés de Notes', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 4),
-            Text('Consultez vos résultats scolaires par composition et trimestre 🇲🇱', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60)),
+            Text('Consultez vos résultats scolaires par période 🇲🇱', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60)),
             const SizedBox(height: 20),
 
             // Period Selector Chips
@@ -76,23 +107,27 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _periodChip('Comp. 1', 'COMPOSITION_1'),
-                  const SizedBox(width: 8),
-                  _periodChip('Comp. 2', 'COMPOSITION_2'),
-                  const SizedBox(width: 8),
-                  _periodChip('Comp. 3', 'COMPOSITION_3'),
-                  const SizedBox(width: 8),
-                  _periodChip('Comp. 4', 'COMPOSITION_4'),
-                  const SizedBox(width: 8),
-                  _periodChip('Comp. 5', 'COMPOSITION_5'),
-                  const SizedBox(width: 8),
-                  _periodChip('Comp. 6', 'COMPOSITION_6'),
-                  const SizedBox(width: 8),
-                  _periodChip('Trimestre 1', 'TRIMESTRE_1'),
-                  const SizedBox(width: 8),
-                  _periodChip('Trimestre 2', 'TRIMESTRE_2'),
-                  const SizedBox(width: 8),
-                  _periodChip('Trimestre 3', 'TRIMESTRE_3'),
+                  if (cat == 'PRIMAIRE' || cat == 'MATERNELLE' || cat == 'COLLEGE') ...[
+                    _periodChip('Comp. 1', 'COMPOSITION_1'),
+                    const SizedBox(width: 8),
+                    _periodChip('Comp. 2', 'COMPOSITION_2'),
+                    const SizedBox(width: 8),
+                    _periodChip('Comp. 3', 'COMPOSITION_3'),
+                    const SizedBox(width: 8),
+                    _periodChip('Comp. 4', 'COMPOSITION_4'),
+                    const SizedBox(width: 8),
+                    _periodChip('Comp. 5', 'COMPOSITION_5'),
+                    const SizedBox(width: 8),
+                    _periodChip('Comp. 6', 'COMPOSITION_6'),
+                    if (cat == 'COLLEGE') const SizedBox(width: 8),
+                  ],
+                  if (cat == 'LYCEE' || cat == 'COLLEGE') ...[
+                    _periodChip('Trimestre 1', 'TRIMESTRE_1'),
+                    const SizedBox(width: 8),
+                    _periodChip('Trimestre 2', 'TRIMESTRE_2'),
+                    const SizedBox(width: 8),
+                    _periodChip('Trimestre 3', 'TRIMESTRE_3'),
+                  ],
                 ],
               ),
             ),
