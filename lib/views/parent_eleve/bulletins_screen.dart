@@ -59,7 +59,7 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
       final userData = await AuthService.getUserData();
       if (mounted) setState(() => _userData = userData);
 
-      final targetEleveId = widget.eleveId ?? userData?['id'] ?? userData?['utilisateurId'] ?? 1;
+      final targetEleveId = widget.eleveId ?? userData?['eleveId'] ?? userData?['id'] ?? userData?['utilisateurId'] ?? 1;
 
       // Adjust period if default TRIMESTRE_1 is not allowed for PRIMAIRE/MATERNELLE
       final cat = _getLevelCategory();

@@ -36,7 +36,7 @@ class _PresencesScreenState extends State<PresencesScreen> {
     setState(() => _isLoading = true);
     try {
       final userData = await AuthService.getUserData();
-      final targetEleveId = widget.eleveId ?? userData?['id'] ?? 1;
+      final targetEleveId = widget.eleveId ?? userData?['eleveId'] ?? userData?['id'] ?? 1;
 
       final data = await ApiService.get('/presences/eleve/$targetEleveId');
       if (data is List && mounted) {

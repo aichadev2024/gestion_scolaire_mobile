@@ -60,7 +60,7 @@ class _EleveDashboardState extends State<EleveDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final eleveId = _eleveProfilData?['id'] ?? _userData?['id'];
+    final eleveId = _eleveProfilData?['id'] ?? _userData?['eleveId'] ?? _userData?['id'];
 
     final pages = [
       _buildHomeScreen(),

@@ -38,7 +38,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
     setState(() => _isLoading = true);
     try {
       final userData = await AuthService.getUserData();
-      final targetEleveId = widget.eleveId ?? userData?['id'] ?? 1;
+      final targetEleveId = widget.eleveId ?? userData?['eleveId'] ?? userData?['id'] ?? 1;
 
       // 1. Fetch payments list from backend
       final dataPaiements = await ApiService.get('/paiements/eleve/$targetEleveId');
@@ -261,7 +261,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
         Navigator.pop(context);
         try {
           final userData = await AuthService.getUserData();
-          final targetEleveId = widget.eleveId ?? userData?['id'] ?? 1;
+          final targetEleveId = widget.eleveId ?? userData?['eleveId'] ?? userData?['id'] ?? 1;
 
           await ApiService.post('/paiements', {
             'eleveId': targetEleveId,
