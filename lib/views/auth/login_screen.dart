@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/router/app_router.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
-import '../parent_eleve/parent_dashboard.dart';
-import '../parent_eleve/eleve_dashboard.dart';
-import '../enseignant/enseignant_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -68,25 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (response != null && response['token'] != null && mounted) {
-        final user = await AuthService.getUserData();
-        final role = user?['role'] ?? 'ELEVE';
-
-        if (role == 'ENSEIGNANT') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const EnseignantDashboard()),
-          );
-        } else if (role == 'ELEVE') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const EleveDashboard()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const ParentDashboard()),
-          );
-        }
+        await appAuth.refresh();
+        if (mounted) context.go(appAuth.home);
       } else if (mounted) {
         setState(() => _errorMessage = 'Identifiants invalides.');
       }
@@ -119,25 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final response = await AuthService.verifyOtp(_otpUserId!, otp);
       if (response != null && response['token'] != null && mounted) {
-        final user = await AuthService.getUserData();
-        final role = user?['role'] ?? 'ELEVE';
-
-        if (role == 'ENSEIGNANT') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const EnseignantDashboard()),
-          );
-        } else if (role == 'ELEVE') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const EleveDashboard()),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const ParentDashboard()),
-          );
-        }
+        await appAuth.refresh();
+        if (mounted) context.go(appAuth.home);
       } else if (mounted) {
         setState(() => _errorMessage = 'Code OTP invalide.');
       }

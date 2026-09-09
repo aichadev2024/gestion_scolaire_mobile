@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
-import '../auth/login_screen.dart';
 
 /// Vitrine mobile — identité « Bògòlan », alignée sur la vitrine web.
 class LandingVitrineScreen extends StatelessWidget {
@@ -117,10 +117,7 @@ class LandingVitrineScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ElevatedButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    ),
+                    onPressed: () => context.go('/login'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.indigo,
                       foregroundColor: AppTheme.paper,
