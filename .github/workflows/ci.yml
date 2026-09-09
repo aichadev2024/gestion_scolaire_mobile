@@ -70,7 +70,18 @@ jobs:
 
       - name: Build web
         if: steps.gate.outputs.ready == 'true'
-        run: flutter pub get && flutter build web --release
+        env:
+          # Variable de dépôt (Settings → Secrets and variables → Actions → Variables).
+          # Si absente, l'URL par défaut compilée dans api_constants.dart est utilisée.
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          flutter pub get
+          if [ -n "$API_BASE_URL" ]; then
+            flutter build web --release --dart-define=API_BASE_URL="$API_BASE_URL"
+          else
+            echo "::notice::vars.API_BASE_URL absente — build avec l'URL par défaut."
+            flutter build web --release
+          fi
 
       - name: Déployer sur Vercel
         if: steps.gate.outputs.ready == 'true'
