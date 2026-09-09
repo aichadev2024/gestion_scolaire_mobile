@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import '../constants/api_constants.dart';
@@ -6,6 +7,17 @@ import '../constants/api_constants.dart';
 class AuthService {
   static const String _keyToken = 'jwt_token';
   static const String _keyUserData = 'user_data';
+
+  /// Stockage chiffré (Keychain iOS / EncryptedSharedPreferences Android /
+  /// WebCrypto sur le web) pour les données d'authentification sensibles.
+  static const FlutterSecureStorage _secure = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+
+  static Future<void> _persistSession(Map<String, dynamic> data) async {
+    await _secure.write(key: _keyToken, value: data['token'] as String);
+    await _secure.write(key: _keyUserData, value: jsonEncode(data));
+  }
 
   static Future<Map<String, dynamic>?> login(String username, String password) async {
     try {
@@ -16,9 +28,7 @@ class AuthService {
       });
 
       if (data != null && data['token'] != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_keyToken, data['token']);
-        await prefs.setString(_keyUserData, jsonEncode(data));
+        await _persistSession(data);
       }
       return data;
     } catch (e) {
@@ -34,9 +44,7 @@ class AuthService {
       });
 
       if (data != null && data['token'] != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_keyToken, data['token']);
-        await prefs.setString(_keyUserData, jsonEncode(data));
+        await _persistSession(data);
       }
       return data;
     } catch (e) {
@@ -56,19 +64,45 @@ class AuthService {
   }
 
   static Future<void> logout() async {
+    await _secure.delete(key: _keyToken);
+    await _secure.delete(key: _keyUserData);
+    // Nettoyage défensif d'une éventuelle session héritée en clair.
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyToken);
     await prefs.remove(_keyUserData);
   }
 
-  static Future<String?> getToken() async {
+  /// Migration ponctuelle : si une session existe encore en clair dans
+  /// SharedPreferences (anciennes versions), on la déplace vers le stockage
+  /// chiffré et on efface la copie en clair.
+  static Future<String?> _migrateLegacyIfNeeded() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyToken);
+    final legacyToken = prefs.getString(_keyToken);
+    if (legacyToken == null || legacyToken.isEmpty) return null;
+
+    await _secure.write(key: _keyToken, value: legacyToken);
+    final legacyUser = prefs.getString(_keyUserData);
+    if (legacyUser != null) {
+      await _secure.write(key: _keyUserData, value: legacyUser);
+    }
+    await prefs.remove(_keyToken);
+    await prefs.remove(_keyUserData);
+    return legacyToken;
+  }
+
+  static Future<String?> getToken() async {
+    final token = await _secure.read(key: _keyToken);
+    if (token != null && token.isNotEmpty) return token;
+    return _migrateLegacyIfNeeded();
   }
 
   static Future<Map<String, dynamic>?> getUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = prefs.getString(_keyUserData);
+    var jsonStr = await _secure.read(key: _keyUserData);
+    if (jsonStr == null) {
+      // Peut avoir été déplacée par la migration déclenchée dans getToken().
+      await _migrateLegacyIfNeeded();
+      jsonStr = await _secure.read(key: _keyUserData);
+    }
     if (jsonStr != null) {
       return jsonDecode(jsonStr);
     }
