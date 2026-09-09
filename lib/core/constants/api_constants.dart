@@ -10,7 +10,8 @@ class ApiConstants {
   ///   - Émulateur Android : `http://10.0.2.2:8089/api`
   ///   - Web / desktop      : `http://localhost:8089/api`
   ///   - Appareil physique  : `http://<IP-LAN-du-poste>:8089/api`
-  static const String _defaultUrl = 'https://gestion-scolaire-backend-x0hy.onrender.com/api';
+  static const String _defaultUrl =
+      'https://gestion-scolaire-backend-x0hy.onrender.com/api';
 
   static const String productionUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -21,7 +22,6 @@ class ApiConstants {
   static const String localWebUrl = 'http://localhost:8089/api';
 
   static const String baseUrl = productionUrl;
-
   // Endpoints
   static const String login = '/auth/login';
   static const String verifyOtp = '/auth/verify-otp';
