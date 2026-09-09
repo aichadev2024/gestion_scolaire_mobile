@@ -19,8 +19,8 @@ class NetaaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Netaa École Mobile',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light,
+      theme: AppTheme.lightTheme,
       home: const AuthWrapper(),
     );
   }
@@ -60,9 +60,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Widget build(BuildContext context) {
     if (_checking) {
       return const Scaffold(
-        backgroundColor: AppTheme.bgDark,
+        backgroundColor: AppTheme.paper,
         body: Center(
-          child: CircularProgressIndicator(color: AppTheme.primaryGold),
+          child: CircularProgressIndicator(color: AppTheme.indigo),
         ),
       );
     }

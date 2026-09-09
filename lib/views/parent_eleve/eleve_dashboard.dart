@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -22,7 +20,6 @@ class _EleveDashboardState extends State<EleveDashboard> {
   int _selectedIndex = 0;
   Map<String, dynamic>? _userData;
   Map<String, dynamic>? _eleveProfilData;
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -31,7 +28,6 @@ class _EleveDashboardState extends State<EleveDashboard> {
   }
 
   Future<void> _loadEleveData() async {
-    setState(() => _isLoading = true);
     try {
       final user = await AuthService.getUserData();
       if (mounted) setState(() => _userData = user);
@@ -52,10 +48,7 @@ class _EleveDashboardState extends State<EleveDashboard> {
           } catch (_) {}
         }
       }
-    } catch (_) {
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    } catch (_) {}
   }
 
   @override
@@ -70,25 +63,25 @@ class _EleveDashboardState extends State<EleveDashboard> {
     ];
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppTheme.paper,
       body: pages[_selectedIndex],
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceDark,
-          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+        decoration: const BoxDecoration(
+          color: AppTheme.surface,
+          border: Border(top: BorderSide(color: AppTheme.border)),
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: (index) => setState(() => _selectedIndex = index),
-          backgroundColor: AppTheme.surfaceDark,
-          selectedItemColor: AppTheme.primaryGold,
-          unselectedItemColor: Colors.white54,
+          backgroundColor: AppTheme.surface,
+          selectedItemColor: AppTheme.indigo,
+          unselectedItemColor: AppTheme.inkMuted,
           type: BottomNavigationBarType.fixed,
           selectedFontSize: 11,
           unselectedFontSize: 11,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.school_rounded), label: 'Accueil'),
-            BottomNavigationBarItem(icon: Icon(Icons.badge_rounded), label: 'Ma Carte'),
+            BottomNavigationBarItem(icon: Icon(Icons.badge_rounded), label: 'Ma carte'),
             BottomNavigationBarItem(icon: Icon(Icons.menu_book_rounded), label: 'Bulletins'),
             BottomNavigationBarItem(icon: Icon(Icons.event_available_rounded), label: 'Présences'),
           ],
@@ -111,15 +104,15 @@ class _EleveDashboardState extends State<EleveDashboard> {
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _loadEleveData,
-        color: AppTheme.primaryGold,
-        backgroundColor: AppTheme.surfaceDark,
+        color: AppTheme.indigo,
+        backgroundColor: AppTheme.surface,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top User Header
+              // En-tête utilisateur
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -127,31 +120,27 @@ class _EleveDashboardState extends State<EleveDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryGold.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'ESPACE ÉLÈVE LYCÉE 🎓',
-                                style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryGold),
-                              ),
-                            ),
-                          ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.mil.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'ESPACE ÉLÈVE',
+                            style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.laterite, letterSpacing: 1.5),
+                          ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Salut, $prenom 👋',
-                          style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: AppTheme.display(fontSize: 22, color: AppTheme.indigo),
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           '$etablissement • $classeNom',
-                          style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60, fontWeight: FontWeight.w500),
+                          style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted, fontWeight: FontWeight.w500),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -160,8 +149,8 @@ class _EleveDashboardState extends State<EleveDashboard> {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.key_rounded, color: AppTheme.primaryGold),
-                        tooltip: 'Modifier mot de passe',
+                        icon: const Icon(Icons.key_rounded, color: AppTheme.indigo),
+                        tooltip: 'Modifier le mot de passe',
                         onPressed: () {
                           showDialog(
                             context: context,
@@ -170,7 +159,7 @@ class _EleveDashboardState extends State<EleveDashboard> {
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.logout_rounded, color: AppTheme.accentRose),
+                        icon: const Icon(Icons.logout_rounded, color: AppTheme.danger),
                         onPressed: () async {
                           await AuthService.logout();
                           if (mounted) {
@@ -187,10 +176,10 @@ class _EleveDashboardState extends State<EleveDashboard> {
               ),
               const SizedBox(height: 20),
 
-              // Student Card Banner
+              // Bandeau élève
               Container(
                 padding: const EdgeInsets.all(18),
-                decoration: AppTheme.glassDecoration(borderColor: AppTheme.primaryGold),
+                decoration: AppTheme.cardDecoration(borderColor: AppTheme.mil.withValues(alpha: 0.5)),
                 child: Row(
                   children: [
                     Container(
@@ -198,8 +187,8 @@ class _EleveDashboardState extends State<EleveDashboard> {
                       height: 60,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppTheme.primaryNavy,
-                        border: Border.all(color: AppTheme.primaryGold, width: 2),
+                        color: AppTheme.indigo,
+                        border: Border.all(color: AppTheme.mil, width: 2),
                       ),
                       child: ClipOval(
                         child: photoUrl != null && photoUrl.toString().startsWith('http')
@@ -207,7 +196,7 @@ class _EleveDashboardState extends State<EleveDashboard> {
                             : Center(
                                 child: Text(
                                   '${prenom.isNotEmpty ? prenom[0] : 'E'}${nom.isNotEmpty ? nom[0] : 'L'}',
-                                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primaryGold, fontSize: 22),
+                                  style: AppTheme.display(fontWeight: FontWeight.bold, color: AppTheme.mil, fontSize: 22),
                                 ),
                               ),
                       ),
@@ -217,14 +206,14 @@ class _EleveDashboardState extends State<EleveDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('$prenom $nom', style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text('$prenom $nom', style: AppTheme.display(fontSize: 17, color: AppTheme.indigo)),
                           const SizedBox(height: 2),
-                          Text('Matricule : $matricule', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white70)),
+                          Text('Matricule : $matricule', style: AppTheme.mono(fontSize: 12, color: AppTheme.inkMuted)),
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(color: AppTheme.primaryGold.withOpacity(0.2), borderRadius: BorderRadius.circular(6)),
-                            child: Text(classeNom, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGold)),
+                            decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(6)),
+                            child: Text(classeNom, style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.laterite)),
                           ),
                         ],
                       ),
@@ -234,49 +223,41 @@ class _EleveDashboardState extends State<EleveDashboard> {
               ),
               const SizedBox(height: 20),
 
-              // Digital Badge Shortcut
+              // Raccourci carte numérique
               GestureDetector(
                 onTap: () => setState(() => _selectedIndex = 1),
                 child: Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.primaryGold.withOpacity(0.4), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(color: AppTheme.primaryNavy.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 6)),
-                    ],
-                  ),
+                  decoration: AppTheme.heroDecoration(borderRadius: 16),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryGold.withOpacity(0.2),
+                          color: AppTheme.mil.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.qr_code_2_rounded, size: 32, color: AppTheme.primaryGold),
+                        child: const Icon(Icons.qr_code_2_rounded, size: 32, color: AppTheme.mil),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Ma Carte Élève Numérique 🪪', style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Text('Ma carte élève numérique', style: AppTheme.display(fontSize: 15, color: AppTheme.paper)),
                             const SizedBox(height: 2),
-                            Text('Afficher mon QR Code pour le portail & la cantine', style: GoogleFonts.outfit(fontSize: 11, color: Colors.white70)),
+                            Text('Afficher mon QR code pour le portail & la cantine', style: AppTheme.body(fontSize: 11, color: AppTheme.paper.withValues(alpha: 0.75))),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primaryGold, size: 16),
+                      const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.mil, size: 16),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
 
-              // Services & Tools Grid
-              Text('Mes Outils & Suivi Lycéen 📚', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('Mes outils & suivi', style: AppTheme.display(fontSize: 16, color: AppTheme.indigo)),
               const SizedBox(height: 14),
 
               GridView.count(
@@ -287,17 +268,17 @@ class _EleveDashboardState extends State<EleveDashboard> {
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _gridCard(
-                    '📜 Mes Bulletins & Notes',
-                    'Relevés & Moyennes',
+                    'Mes bulletins & notes',
+                    'Relevés & moyennes',
                     Icons.menu_book_rounded,
-                    AppTheme.accentIndigo,
+                    AppTheme.indigo,
                     () => setState(() => _selectedIndex = 2),
                   ),
                   _gridCard(
-                    '📅 Emploi du Temps',
-                    'Planning des Cours',
+                    'Emploi du temps',
+                    'Planning des cours',
                     Icons.calendar_today_rounded,
-                    Colors.purpleAccent,
+                    AppTheme.laterite,
                     () {
                       Navigator.push(
                         context,
@@ -312,22 +293,21 @@ class _EleveDashboardState extends State<EleveDashboard> {
                     },
                   ),
                   _gridCard(
-                    '✅ Mes Présences',
-                    'Suivi Ponctualité',
+                    'Mes présences',
+                    'Suivi ponctualité',
                     Icons.event_available_rounded,
-                    AppTheme.primaryGold,
+                    AppTheme.mil,
                     () => setState(() => _selectedIndex = 3),
                   ),
                   _gridCard(
-                    '📝 Devoirs & Annonces',
-                    'Cahier de Texte',
+                    'Devoirs & annonces',
+                    'Cahier de texte',
                     Icons.assignment_rounded,
-                    AppTheme.accentEmerald,
+                    AppTheme.flagGreen,
                     () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('📚 Vos devoirs et annonces de classe sont synchronisés.'),
-                          backgroundColor: AppTheme.surfaceDark,
+                          content: Text('Vos devoirs et annonces de classe sont synchronisés.'),
                         ),
                       );
                     },
@@ -346,22 +326,22 @@ class _EleveDashboardState extends State<EleveDashboard> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: AppTheme.glassDecoration(),
+        decoration: AppTheme.cardDecoration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 26),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(title, style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.ink)),
                 const SizedBox(height: 2),
-                Text(subtitle, style: GoogleFonts.outfit(fontSize: 10, color: Colors.white54)),
+                Text(subtitle, style: AppTheme.body(fontSize: 10, color: AppTheme.inkMuted)),
               ],
             )
           ],

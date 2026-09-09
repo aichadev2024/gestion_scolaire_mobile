@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -66,17 +65,17 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
   Widget build(BuildContext context) {
     final prenom = _userData?['prenom'] ?? 'Enseignant';
     final nom = _userData?['nom'] ?? '';
-    final etablissement = _userData?['etablissementNom'] ?? 'Établissement Scolaire';
+    final etablissement = _userData?['etablissementNom'] ?? 'Établissement scolaire';
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppTheme.paper,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Header
+              // En-tête
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -84,18 +83,18 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Espace Enseignant 👨‍🏫', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text('ESPACE ENSEIGNANT', style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.laterite, letterSpacing: 1.5)),
                         const SizedBox(height: 2),
-                        Text('Prof. $prenom $nom', style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.primaryGold, fontWeight: FontWeight.w600)),
+                        Text('Prof. $prenom $nom', style: AppTheme.display(fontSize: 20, color: AppTheme.indigo)),
                         const SizedBox(height: 3),
                         Row(
                           children: [
-                            const Icon(Icons.account_balance_rounded, size: 12, color: Colors.white54),
+                            const Icon(Icons.account_balance_rounded, size: 12, color: AppTheme.inkMuted),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 etablissement,
-                                style: GoogleFonts.outfit(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500),
+                                style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted, fontWeight: FontWeight.w500),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -107,8 +106,8 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.key_rounded, color: AppTheme.primaryGold),
-                        tooltip: 'Modifier mot de passe',
+                        icon: const Icon(Icons.key_rounded, color: AppTheme.indigo),
+                        tooltip: 'Modifier le mot de passe',
                         onPressed: () {
                           showDialog(
                             context: context,
@@ -117,7 +116,7 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.logout_rounded, color: AppTheme.accentRose),
+                        icon: const Icon(Icons.logout_rounded, color: AppTheme.danger),
                         onPressed: () async {
                           await AuthService.logout();
                           if (mounted) {
@@ -131,7 +130,7 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
               ),
               const SizedBox(height: 24),
 
-              // Quick Actions Card
+              // Carte du cours actif
               Builder(
                 builder: (context) {
                   final cm = _activeCreneau?['classeMatiere'];
@@ -139,28 +138,28 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                   final classeNom = classeObj?['nom'] ?? (_classes.isNotEmpty ? _classes[0]['nom'] : null);
                   final classeIdVal = classeObj?['id'] ?? (_classes.isNotEmpty ? _classes[0]['id'] : null);
                   final cmIdVal = cm?['id'];
-                  final matiereNom = cm?['matiere']?['nom'] ?? 'Cours Enseignant';
+                  final matiereNom = cm?['matiere']?['nom'] ?? 'Cours enseignant';
                   final salleStr = _activeCreneau?['salle'] ?? 'Salle de cours';
                   final hDebut = _activeCreneau?['heureDebut'] ?? '';
                   final hFin = _activeCreneau?['heureFin'] ?? '';
-                  final horraireStr = hDebut.isNotEmpty && hFin.isNotEmpty ? '$hDebut - $hFin' : 'Créneau Actif';
+                  final horraireStr = hDebut.isNotEmpty && hFin.isNotEmpty ? '$hDebut - $hFin' : 'Créneau actif';
 
                   return Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: AppTheme.glassDecoration(borderColor: AppTheme.primaryGold),
+                    decoration: AppTheme.cardDecoration(borderColor: AppTheme.mil.withValues(alpha: 0.5)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('GESTION DU COURS ACTIF', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryGold)),
+                        Text('GESTION DU COURS ACTIF', style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.inkMuted, letterSpacing: 1)),
                         const SizedBox(height: 8),
                         Text(
                           classeNom != null ? '$classeNom • $matiereNom' : 'Aucun cours actif actuellement',
-                          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: AppTheme.display(fontSize: 18, color: AppTheme.indigo),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           classeNom != null ? '$salleStr • $horraireStr' : 'Sélectionnez une classe ci-dessous pour faire l\'appel',
-                          style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60),
+                          style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -180,10 +179,10 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                                   );
                                 },
                                 icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-                                label: const Text('Faire l\'Appel'),
+                                label: const Text('Faire l\'appel'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.accentEmerald,
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: AppTheme.flagGreen,
+                                  foregroundColor: AppTheme.paper,
                                 ),
                               ),
                             ),
@@ -203,10 +202,10 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                                   );
                                 },
                                 icon: const Icon(Icons.edit_note_rounded, size: 18),
-                                label: const Text('Saisir Notes'),
+                                label: const Text('Saisir notes'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.accentIndigo,
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: AppTheme.indigo,
+                                  foregroundColor: AppTheme.paper,
                                 ),
                               ),
                             ),
@@ -219,7 +218,7 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
               ),
               const SizedBox(height: 16),
 
-              // Navigation Card to Full Timetable
+              // Accès emploi du temps
               GestureDetector(
                 onTap: () {
                   final teacherId = _userData?['enseignantId'] ?? _userData?['id'];
@@ -234,52 +233,48 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                 },
                 child: Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.primaryGold.withOpacity(0.4)),
-                  ),
+                  decoration: AppTheme.heroDecoration(borderRadius: 16),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: AppTheme.primaryGold.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
-                        child: const Icon(Icons.calendar_today_rounded, color: AppTheme.primaryGold, size: 24),
+                        decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.calendar_today_rounded, color: AppTheme.mil, size: 24),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Mon Emploi du Temps Hebdomadaire 📅', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Text('Mon emploi du temps hebdomadaire', style: AppTheme.display(fontSize: 14, color: AppTheme.paper)),
                             const SizedBox(height: 2),
-                            Text('Consultez votre planning par jour et par classe', style: GoogleFonts.outfit(fontSize: 11, color: Colors.white70)),
+                            Text('Consultez votre planning par jour et par classe', style: AppTheme.body(fontSize: 11, color: AppTheme.paper.withValues(alpha: 0.75))),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primaryGold, size: 16),
+                      const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.mil, size: 16),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
 
-              Text('Mes Classes de la Semaine', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('Mes classes de la semaine', style: AppTheme.display(fontSize: 16, color: AppTheme.indigo)),
               const SizedBox(height: 12),
 
               if (_isLoading)
-                const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppTheme.primaryGold)))
+                const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppTheme.indigo)))
               else if (_classes.isEmpty) ...[
                 Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: AppTheme.glassDecoration(),
+                  decoration: AppTheme.cardDecoration(),
                   child: Column(
                     children: [
-                      const Icon(Icons.school_outlined, size: 40, color: Colors.white38),
+                      const Icon(Icons.school_outlined, size: 40, color: AppTheme.inkMuted),
                       const SizedBox(height: 8),
                       Text(
                         'Aucune classe attribuée ou enregistrée sur le serveur.',
-                        style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+                        style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -287,7 +282,6 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                         onPressed: _loadUserData,
                         icon: const Icon(Icons.refresh_rounded, size: 18),
                         label: const Text('Actualiser'),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGold),
                       )
                     ],
                   ),
@@ -302,7 +296,7 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                     cNom,
                     'Gestion de la classe • $codeMatiere',
                     Icons.school_rounded,
-                    AppTheme.accentIndigo,
+                    AppTheme.indigo,
                     onTap: () => _showClassOptions(context, cId is int ? cId : int.tryParse(cId.toString()), cNom),
                   );
                 }),
@@ -317,7 +311,7 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
   void _showClassOptions(BuildContext context, int? classeId, String classeNom) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.surfaceDark,
+      backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) {
         return Padding(
@@ -328,22 +322,22 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
             children: [
               Text(
                 'Actions pour $classeNom',
-                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                style: AppTheme.display(fontSize: 18, color: AppTheme.indigo),
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const CircleAvatar(backgroundColor: AppTheme.accentEmerald, child: Icon(Icons.check_circle_outline_rounded, color: Colors.white)),
-                title: Text('Faire l\'Appel', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: Text('Prendre les présences et retards', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                leading: const CircleAvatar(backgroundColor: AppTheme.flagGreen, child: Icon(Icons.check_circle_outline_rounded, color: Colors.white)),
+                title: Text('Faire l\'appel', style: AppTheme.body(color: AppTheme.ink, fontWeight: FontWeight.bold)),
+                subtitle: Text('Prendre les présences et retards', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 12)),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute(builder: (_) => PrisePresenceScreen(classeId: classeId, classeNom: classeNom)));
                 },
               ),
               ListTile(
-                leading: const CircleAvatar(backgroundColor: AppTheme.accentIndigo, child: Icon(Icons.edit_note_rounded, color: Colors.white)),
-                title: Text('Saisir les Notes', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: Text('Saisir et publier les évaluations', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                leading: const CircleAvatar(backgroundColor: AppTheme.indigo, child: Icon(Icons.edit_note_rounded, color: Colors.white)),
+                title: Text('Saisir les notes', style: AppTheme.body(color: AppTheme.ink, fontWeight: FontWeight.bold)),
+                subtitle: Text('Saisir et publier les évaluations', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 12)),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute(builder: (_) => SaisieNotesScreen(classeId: classeId, classeNom: classeNom)));
@@ -362,7 +356,7 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
-        decoration: AppTheme.glassDecoration(),
+        decoration: AppTheme.cardDecoration(),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -370,21 +364,21 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
                   child: Icon(icon, color: color, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(title, style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.ink)),
                     const SizedBox(height: 2),
-                    Text(subtitle, style: GoogleFonts.outfit(fontSize: 12, color: Colors.white54)),
+                    Text(subtitle, style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
                   ],
                 ),
               ],
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+            const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.inkMuted, size: 16),
           ],
         ),
       ),

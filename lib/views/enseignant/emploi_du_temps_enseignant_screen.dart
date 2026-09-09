@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -47,12 +46,19 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
         for (var item in res) {
           final jour = (item['jourSemaine'] ?? '').toString().toUpperCase();
           int dayIdx = 0;
-          if (jour.contains('LUNDI')) dayIdx = 0;
-          else if (jour.contains('MARDI')) dayIdx = 1;
-          else if (jour.contains('MERCREDI')) dayIdx = 2;
-          else if (jour.contains('JEUDI')) dayIdx = 3;
-          else if (jour.contains('VENDREDI')) dayIdx = 4;
-          else if (jour.contains('SAMEDI')) dayIdx = 5;
+          if (jour.contains('LUNDI')) {
+            dayIdx = 0;
+          } else if (jour.contains('MARDI')) {
+            dayIdx = 1;
+          } else if (jour.contains('MERCREDI')) {
+            dayIdx = 2;
+          } else if (jour.contains('JEUDI')) {
+            dayIdx = 3;
+          } else if (jour.contains('VENDREDI')) {
+            dayIdx = 4;
+          } else if (jour.contains('SAMEDI')) {
+            dayIdx = 5;
+          }
 
           final hDebut = item['heureDebut'] ?? '';
           final hFin = item['heureFin'] ?? '';
@@ -72,7 +78,7 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
             'classe': classeNom,
             'matiere': matiereNom,
             'salle': salleStr,
-            'statut': 'A venir',
+            'statut': 'À venir',
             'classeId': classeIdVal,
             'classeMatiereId': cmIdVal,
           });
@@ -92,13 +98,11 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
     final activeCourses = _scheduleByDay[_selectedDayIndex] ?? [];
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppTheme.paper,
       appBar: AppBar(
-        backgroundColor: AppTheme.surfaceDark,
-        elevation: 0,
-        title: Text('Mon Emploi du Temps 📅', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18)),
+        title: Text('Mon emploi du temps', style: AppTheme.display(fontWeight: FontWeight.bold, color: AppTheme.indigo, fontSize: 18)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppTheme.indigo),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -107,7 +111,6 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
           children: [
             const SizedBox(height: 16),
 
-            // Day Filter Selector Chips
             SizedBox(
               height: 44,
               child: ListView.builder(
@@ -123,17 +126,17 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.primaryGold : Colors.white.withValues(alpha: 0.08),
+                        color: isSelected ? AppTheme.indigo : AppTheme.surfaceMuted,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? AppTheme.primaryGold : Colors.white.withValues(alpha: 0.15),
+                          color: isSelected ? AppTheme.indigo : AppTheme.border,
                         ),
                       ),
                       child: Text(
                         _jours[index],
-                        style: GoogleFonts.outfit(
+                        style: AppTheme.body(
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : Colors.white70,
+                          color: isSelected ? AppTheme.paper : AppTheme.inkMuted,
                           fontSize: 13,
                         ),
                       ),
@@ -144,139 +147,137 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
             ),
             const SizedBox(height: 20),
 
-            // Timeline List of Courses for selected day
             Expanded(
-              child: activeCourses.isEmpty
-                  ? Center(
-                      child: Text('Aucun cours programmé ce jour-là 🎉', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 14)),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: activeCourses.length,
-                      itemBuilder: (context, index) {
-                        final item = activeCourses[index];
-                        final isNow = item['statut'] == 'En cours';
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: AppTheme.indigo))
+                  : activeCourses.isEmpty
+                      ? Center(
+                          child: Text('Aucun cours programmé ce jour-là', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 14)),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: activeCourses.length,
+                          itemBuilder: (context, index) {
+                            final item = activeCourses[index];
+                            final isNow = item['statut'] == 'En cours';
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(18),
-                          decoration: AppTheme.glassDecoration(
-                            borderColor: isNow ? AppTheme.primaryGold : Colors.white10,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              padding: const EdgeInsets.all(18),
+                              decoration: AppTheme.cardDecoration(
+                                borderColor: isNow ? AppTheme.mil.withValues(alpha: 0.6) : AppTheme.border,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.primaryGold),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        item['heure']!,
-                                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primaryGold, fontSize: 14),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.laterite),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            item['heure']!,
+                                            style: AppTheme.body(fontWeight: FontWeight.bold, color: AppTheme.laterite, fontSize: 14),
+                                          ),
+                                        ],
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: isNow ? AppTheme.flagGreen.withValues(alpha: 0.14) : AppTheme.surfaceMuted,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          item['statut']!,
+                                          style: AppTheme.body(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: isNow ? AppTheme.flagGreen : AppTheme.inkMuted,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: isNow ? AppTheme.accentEmerald.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      item['statut']!,
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: isNow ? AppTheme.accentEmerald : Colors.white60,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                '${item['classe']!} • ${item['matiere']!}',
-                                style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(Icons.location_on_outlined, size: 14, color: Colors.white54),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(height: 12),
                                   Text(
-                                    item['salle']!,
-                                    style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60),
+                                    '${item['classe']!} • ${item['matiere']!}',
+                                    style: AppTheme.display(fontSize: 17, color: AppTheme.indigo),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.inkMuted),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        item['salle']!,
+                                        style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
 
-                              // Quick Action Buttons
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: () {
-                                        final cId = item['classeId'];
-                                        final cmId = item['classeMatiereId'];
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => PrisePresenceScreen(
-                                              classeId: cId is int ? cId : (cId != null ? int.tryParse(cId.toString()) : null),
-                                              classeMatiereId: cmId is int ? cmId : (cmId != null ? int.tryParse(cmId.toString()) : null),
-                                              classeNom: item['classe']?.toString() ?? 'Classe',
-                                            ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            final cId = item['classeId'];
+                                            final cmId = item['classeMatiereId'];
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => PrisePresenceScreen(
+                                                  classeId: cId is int ? cId : (cId != null ? int.tryParse(cId.toString()) : null),
+                                                  classeMatiereId: cmId is int ? cmId : (cmId != null ? int.tryParse(cmId.toString()) : null),
+                                                  classeNom: item['classe']?.toString() ?? 'Classe',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                                          label: const Text('Appel'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppTheme.flagGreen,
+                                            foregroundColor: AppTheme.paper,
+                                            padding: const EdgeInsets.symmetric(vertical: 10),
                                           ),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
-                                      label: const Text('Faire l\'Appel'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppTheme.accentEmerald,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: () {
-                                        final cId = item['classeId'];
-                                        final cmId = item['classeMatiereId'];
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => SaisieNotesScreen(
-                                              classeId: cId is int ? cId : (cId != null ? int.tryParse(cId.toString()) : null),
-                                              classeMatiereId: cmId is int ? cmId : (cmId != null ? int.tryParse(cmId.toString()) : null),
-                                              classeNom: item['classe']?.toString() ?? 'Classe',
-                                            ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            final cId = item['classeId'];
+                                            final cmId = item['classeMatiereId'];
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => SaisieNotesScreen(
+                                                  classeId: cId is int ? cId : (cId != null ? int.tryParse(cId.toString()) : null),
+                                                  classeMatiereId: cmId is int ? cmId : (cmId != null ? int.tryParse(cmId.toString()) : null),
+                                                  classeNom: item['classe']?.toString() ?? 'Classe',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.edit_note_rounded, size: 16),
+                                          label: const Text('Notes'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppTheme.indigo,
+                                            foregroundColor: AppTheme.paper,
+                                            padding: const EdgeInsets.symmetric(vertical: 10),
                                           ),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.edit_note_rounded, size: 16),
-                                      label: const Text('Saisir Notes'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppTheme.accentIndigo,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 10),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
@@ -17,7 +16,6 @@ class CarteScolaireScreen extends StatefulWidget {
 class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
   Map<String, dynamic>? _userData;
   Map<String, dynamic>? _fetchedChildData;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -26,7 +24,6 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
     try {
       final user = await AuthService.getUserData();
       if (mounted) setState(() => _userData = user);
@@ -47,10 +44,7 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
           } catch (_) {}
         }
       }
-    } catch (_) {
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    } catch (_) {}
   }
 
   @override
@@ -62,7 +56,7 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
     final matricule = activeEleve?['matricule'] ?? _userData?['matricule'] ?? 'LYC-2026';
     final classe = activeEleve?['classeNom'] ?? _userData?['classeNom'] ?? 'Lycée';
     final photoUrl = profil?['photoUrl'] ?? _userData?['photoUrl'];
-    final etablissement = _userData?['etablissementNom'] ?? 'Établissement Scolaire';
+    final etablissement = _userData?['etablissementNom'] ?? 'Établissement scolaire';
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -70,31 +64,32 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
         child: Column(
           children: [
             Text(
-              'Carte Scolaire Numérique',
-              style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              'Carte scolaire numérique',
+              style: AppTheme.display(fontSize: 20, color: AppTheme.indigo),
             ),
             const SizedBox(height: 6),
             Text(
-              'Carte d\'Identité CR80 avec QR Code d\'Accès Sécurisé 🇲🇱',
-              style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60),
+              'Carte d\'identité CR80 avec QR code d\'accès sécurisé',
+              style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
 
-            // Official Student Card Frame
+            // Carte officielle (rendu « carte physique » — fond sombre voulu)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF1B365D), Color(0xFF0F172A)],
+                  colors: [AppTheme.indigo, AppTheme.indigoDeep],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.primaryGold, width: 2),
+                border: Border.all(color: AppTheme.mil, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryGold.withOpacity(0.3),
+                    color: AppTheme.mil.withValues(alpha: 0.3),
                     blurRadius: 25,
                     offset: const Offset(0, 10),
                   )
@@ -102,14 +97,13 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
               ),
               child: Column(
                 children: [
-                  // School Top Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Row(
                           children: [
-                            const Icon(Icons.school_rounded, color: AppTheme.primaryGold, size: 28),
+                            const Icon(Icons.school_rounded, color: AppTheme.mil, size: 28),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
@@ -117,10 +111,10 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                                 children: [
                                   Text(
                                     etablissement.toUpperCase(),
-                                    style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w900, color: AppTheme.primaryGold),
+                                    style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.w900, color: AppTheme.mil),
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  Text('RÉPUBLIQUE DU MALI', style: GoogleFonts.outfit(fontSize: 10, color: Colors.white70)),
+                                  Text('RÉPUBLIQUE DU MALI', style: AppTheme.body(fontSize: 10, color: AppTheme.paper.withValues(alpha: 0.7))),
                                 ],
                               ),
                             ),
@@ -130,31 +124,29 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppTheme.accentEmerald.withOpacity(0.2),
+                          color: AppTheme.flagGreen.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.accentEmerald),
+                          border: Border.all(color: AppTheme.flagGreen),
                         ),
                         child: Text(
-                          '✓ ACTIF',
-                          style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.accentEmerald),
+                          'ACTIF',
+                          style: AppTheme.body(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.flagGreen),
                         ),
                       ),
                     ],
                   ),
-                  const Divider(color: AppTheme.primaryGold, height: 24, thickness: 1),
+                  const Divider(color: AppTheme.mil, height: 24, thickness: 1),
 
-                  // Student Details & Photo Row
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Photo Avatar Frame
                       Container(
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.primaryGold, width: 2),
-                          color: AppTheme.surfaceDark,
+                          border: Border.all(color: AppTheme.mil, width: 2),
+                          color: AppTheme.indigoDeep,
                         ),
                         child: ClipOval(
                           child: photoUrl != null && photoUrl.toString().startsWith('http')
@@ -162,35 +154,34 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                               : Center(
                                   child: Text(
                                     '${prenom.isNotEmpty ? prenom[0] : 'E'}${nom.isNotEmpty ? nom[0] : 'L'}',
-                                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primaryGold, fontSize: 24),
+                                    style: AppTheme.display(fontWeight: FontWeight.bold, color: AppTheme.mil, fontSize: 24),
                                   ),
                                 ),
                         ),
                       ),
                       const SizedBox(width: 16),
 
-                      // Name, Class & Matricule
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               '$prenom $nom'.toUpperCase(),
-                              style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: AppTheme.body(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.paper),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               classe,
-                              style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryGold),
+                              style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.mil),
                             ),
                             const SizedBox(height: 4),
-                            Text('Matricule :', style: GoogleFonts.outfit(fontSize: 10, color: Colors.white60)),
+                            Text('Matricule :', style: AppTheme.body(fontSize: 10, color: AppTheme.paper.withValues(alpha: 0.6))),
                             Text(
                               matricule,
-                              style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: AppTheme.mono(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.paper),
                             ),
                             const SizedBox(height: 2),
-                            Text('Année Scolaire : 2026/2027', style: GoogleFonts.outfit(fontSize: 10, color: Colors.white70)),
+                            Text('Année scolaire : 2026/2027', style: AppTheme.body(fontSize: 10, color: AppTheme.paper.withValues(alpha: 0.7))),
                           ],
                         ),
                       ),
@@ -198,7 +189,6 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // QR Code Section
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -213,29 +203,23 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Scannez pour contrôler l\'accès & authenticité',
-                    style: GoogleFonts.outfit(fontSize: 11, color: Colors.white60),
+                    'Scannez pour contrôler l\'accès & l\'authenticité',
+                    style: AppTheme.body(fontSize: 11, color: AppTheme.paper.withValues(alpha: 0.65)),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // Action Pass Button
             ElevatedButton.icon(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Carte téléchargée dans votre galerie !')),
+                  const SnackBar(content: Text('Carte téléchargée dans votre galerie.')),
                 );
               },
               icon: const Icon(Icons.download_rounded),
-              label: Text('Enregistrer le Pass Numérique', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGold,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
+              label: const Text('Enregistrer le pass numérique'),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
             ),
           ],
         ),

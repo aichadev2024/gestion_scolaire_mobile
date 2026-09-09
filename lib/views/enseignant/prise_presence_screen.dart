@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -84,8 +83,8 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
         SnackBar(
           content: Text(
             successCount > 0
-                ? '$successCount fiches de présence transmises au serveur !'
-                : 'Présences de la classe enregistrées avec succès !',
+                ? '$successCount fiches de présence transmises au serveur.'
+                : 'Présences de la classe enregistrées avec succès.',
           ),
         ),
       );
@@ -95,21 +94,21 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppTheme.paper,
       appBar: AppBar(
-        title: Text('Faire l\'Appel — ${widget.classeNom}', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text('Faire l\'appel — ${widget.classeNom}', style: AppTheme.display(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.indigo)),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Text('Sélectionnez le statut de chaque élève pour ce cours 🇲🇱', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60)),
+              Text('Sélectionnez le statut de chaque élève pour ce cours', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
               const SizedBox(height: 16),
 
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGold))
+                    ? const Center(child: CircularProgressIndicator(color: AppTheme.indigo))
                     : _eleves.isEmpty
                         ? Center(
                             child: Padding(
@@ -117,9 +116,9 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.people_outline_rounded, size: 48, color: Colors.white38),
+                                  const Icon(Icons.people_outline_rounded, size: 48, color: AppTheme.inkMuted),
                                   const SizedBox(height: 12),
-                                  Text('Aucun élève trouvé pour cette classe.', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14), textAlign: TextAlign.center),
+                                  Text('Aucun élève trouvé pour cette classe.', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 14), textAlign: TextAlign.center),
                                 ],
                               ),
                             ),
@@ -127,59 +126,57 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
                         : ListView.builder(
                             itemCount: _eleves.length,
                             itemBuilder: (context, index) {
-                    final eleve = _eleves[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(12),
-                      decoration: AppTheme.glassDecoration(),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  eleve['nom'],
-                                  style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                                  overflow: TextOverflow.ellipsis,
+                              final eleve = _eleves[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.all(12),
+                                decoration: AppTheme.cardDecoration(),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            eleve['nom'],
+                                            style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.ink),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(eleve['matricule'], style: AppTheme.mono(fontSize: 11, color: AppTheme.inkMuted)),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Row(
+                                      children: [
+                                        _statusBtn(eleve, 'PRESENT', 'P', AppTheme.flagGreen),
+                                        const SizedBox(width: 6),
+                                        _statusBtn(eleve, 'RETARD', 'R', AppTheme.laterite),
+                                        const SizedBox(width: 6),
+                                        _statusBtn(eleve, 'ABSENT', 'A', AppTheme.danger),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 2),
-                                Text(eleve['matricule'], style: GoogleFonts.outfit(fontSize: 11, color: Colors.white54)),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                          const SizedBox(width: 8),
-                          Row(
-                            children: [
-                              _statusBtn(eleve, 'PRESENT', 'P', AppTheme.accentEmerald),
-                              const SizedBox(width: 6),
-                              _statusBtn(eleve, 'RETARD', 'R', AppTheme.primaryGold),
-                              const SizedBox(width: 6),
-                              _statusBtn(eleve, 'ABSENT', 'A', AppTheme.accentRose),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
               ),
 
               ElevatedButton.icon(
                 onPressed: _isSubmitting ? null : _submitPresences,
                 icon: _isSubmitting
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.paper))
                     : const Icon(Icons.check_circle_rounded),
                 label: Text(
-                  _isSubmitting ? 'Transmission en cours...' : 'Valider & Transmettre la Fiche',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
+                  _isSubmitting ? 'Transmission en cours…' : 'Valider & transmettre la fiche',
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentEmerald,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.flagGreen,
+                  foregroundColor: AppTheme.paper,
                   minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ],
@@ -198,15 +195,15 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
         height: 34,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? color : color.withValues(alpha: 0.15),
+          color: isSelected ? color : color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color, width: isSelected ? 2 : 1),
         ),
         child: Text(
           label,
-          style: GoogleFonts.outfit(
+          style: AppTheme.body(
             fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : color,
+            color: isSelected ? AppTheme.paper : color,
           ),
         ),
       ),

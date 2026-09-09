@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -51,10 +50,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('🔒 Mot de passe modifié avec succès !'),
-            backgroundColor: AppTheme.accentEmerald,
-          ),
+          const SnackBar(content: Text('Mot de passe modifié avec succès.')),
         );
       }
     } catch (e) {
@@ -67,13 +63,36 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     }
   }
 
+  Widget _passwordField({
+    required TextEditingController controller,
+    required bool obscure,
+    required VoidCallback onToggle,
+    required String hint,
+    required String? Function(String?) validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscure,
+      style: AppTheme.body(color: AppTheme.ink, fontSize: 13),
+      decoration: InputDecoration(
+        hintText: hint,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        suffixIcon: IconButton(
+          icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: AppTheme.inkMuted, size: 18),
+          onPressed: onToggle,
+        ),
+      ),
+      validator: validator,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: AppTheme.surfaceDark,
+      backgroundColor: AppTheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+        side: const BorderSide(color: AppTheme.border, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -88,24 +107,20 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGold.withOpacity(0.2),
+                      color: AppTheme.indigo.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.lock_reset_rounded, color: AppTheme.primaryGold, size: 24),
+                    child: const Icon(Icons.lock_reset_rounded, color: AppTheme.indigo, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Modifier le mot de passe',
-                      style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                      style: AppTheme.display(fontSize: 16, color: AppTheme.indigo),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 20),
+                    icon: const Icon(Icons.close_rounded, color: AppTheme.inkMuted, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -117,107 +132,64 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.accentRose.withOpacity(0.2),
+                    color: AppTheme.danger.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.accentRose),
+                    border: Border.all(color: AppTheme.danger.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     _errorMsg!,
-                    style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.accentRose),
+                    style: AppTheme.body(fontSize: 12, color: AppTheme.danger),
                   ),
                 ),
                 const SizedBox(height: 14),
               ],
 
-              // Current password input
-              Text('Mot de passe actuel', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white70)),
+              Text('Mot de passe actuel', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
               const SizedBox(height: 4),
-              TextFormField(
+              _passwordField(
                 controller: _oldPasswordController,
-                obscureText: _obscureOld,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: '••••••••',
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.06),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureOld ? Icons.visibility_off : Icons.visibility, color: Colors.white54, size: 18),
-                    onPressed: () => setState(() => _obscureOld = !_obscureOld),
-                  ),
-                ),
+                obscure: _obscureOld,
+                onToggle: () => setState(() => _obscureOld = !_obscureOld),
+                hint: '••••••••',
                 validator: (v) => v == null || v.isEmpty ? 'Veuillez saisir votre mot de passe actuel' : null,
               ),
               const SizedBox(height: 12),
 
-              // New password input
-              Text('Nouveau mot de passe', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white70)),
+              Text('Nouveau mot de passe', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
               const SizedBox(height: 4),
-              TextFormField(
+              _passwordField(
                 controller: _newPasswordController,
-                obscureText: _obscureNew,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Minimum 6 caractères',
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.06),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility, color: Colors.white54, size: 18),
-                    onPressed: () => setState(() => _obscureNew = !_obscureNew),
-                  ),
-                ),
+                obscure: _obscureNew,
+                onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                hint: 'Minimum 6 caractères',
                 validator: (v) => (v == null || v.length < 6) ? '6 caractères minimum requis' : null,
               ),
               const SizedBox(height: 12),
 
-              // Confirm new password input
-              Text('Confirmer le nouveau mot de passe', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white70)),
+              Text('Confirmer le nouveau mot de passe', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
               const SizedBox(height: 4),
-              TextFormField(
+              _passwordField(
                 controller: _confirmPasswordController,
-                obscureText: _obscureConfirm,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Répétez le nouveau mot de passe',
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.06),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility, color: Colors.white54, size: 18),
-                    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                  ),
-                ),
+                obscure: _obscureConfirm,
+                onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                hint: 'Répétez le nouveau mot de passe',
                 validator: (v) => v == null || v.isEmpty ? 'Veuillez confirmer le mot de passe' : null,
               ),
               const SizedBox(height: 20),
 
-              // Action buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
                     onPressed: _isLoading ? null : () => Navigator.pop(context),
-                    child: Text('Annuler', style: GoogleFonts.outfit(color: Colors.white60)),
+                    child: const Text('Annuler'),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _submitChangePassword,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGold,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
                     child: _isLoading
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Enregistrer', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.paper))
+                        : const Text('Enregistrer'),
                   ),
                 ],
               ),

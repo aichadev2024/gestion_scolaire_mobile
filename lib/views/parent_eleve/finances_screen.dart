@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -40,7 +39,6 @@ class _FinancesScreenState extends State<FinancesScreen> {
       final userData = await AuthService.getUserData();
       final targetEleveId = widget.eleveId ?? userData?['eleveId'] ?? userData?['id'] ?? 1;
 
-      // 1. Fetch payments list from backend
       final dataPaiements = await ApiService.get('/paiements/eleve/$targetEleveId');
       if (dataPaiements is List && mounted) {
         _paiements = dataPaiements;
@@ -51,7 +49,6 @@ class _FinancesScreenState extends State<FinancesScreen> {
         if (sum > 0) _dejaPaye = sum;
       }
 
-      // 2. Fetch remaining balance from backend
       final dataSolde = await ApiService.get('/paiements/eleve/$targetEleveId/solde');
       if (dataSolde is Map && dataSolde.containsKey('soldeRestant') && mounted) {
         final solde = (dataSolde['soldeRestant'] ?? 0).toDouble();
@@ -75,42 +72,40 @@ class _FinancesScreenState extends State<FinancesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Frais de Scolarité & Paiements', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text('Frais de scolarité & paiements', style: AppTheme.display(fontSize: 20, color: AppTheme.indigo)),
             const SizedBox(height: 4),
-            Text('Suivez vos règlements et reçus officiels 🇲🇱', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60)),
+            Text('Suivez vos règlements et reçus officiels', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
             const SizedBox(height: 24),
 
             if (_isLoading)
-              const Center(child: SpinKitPulse(color: AppTheme.primaryGold, size: 40))
+              const Center(child: SpinKitPulse(color: AppTheme.indigo, size: 40))
             else ...[
-              // Main Financial Summary Card
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: AppTheme.glassDecoration(borderColor: AppTheme.accentEmerald),
+                decoration: AppTheme.cardDecoration(borderColor: AppTheme.flagGreen.withValues(alpha: 0.5)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('SCOLARITÉ ANNUELLE', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70)),
+                        Text('SCOLARITÉ ANNUELLE', style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.inkMuted, letterSpacing: 1)),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: AppTheme.accentEmerald.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-                          child: Text('${(percentage * 100).toInt()}% Payé', style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.accentEmerald)),
+                          decoration: BoxDecoration(color: AppTheme.flagGreen.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(8)),
+                          child: Text('${(percentage * 100).toInt()}% payé', style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.flagGreen)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
 
-                    // Progress Bar
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
                         value: percentage,
                         minHeight: 12,
-                        backgroundColor: Colors.white10,
-                        color: AppTheme.accentEmerald,
+                        backgroundColor: AppTheme.surfaceMuted,
+                        color: AppTheme.flagGreen,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -118,8 +113,8 @@ class _FinancesScreenState extends State<FinancesScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _statBox('Montant Payé', '${_dejaPaye.toInt()} FCFA', AppTheme.accentEmerald),
-                        _statBox('Reste à Payer', '${resteAPayer.toInt()} FCFA', AppTheme.accentRose),
+                        _statBox('Montant payé', '${_dejaPaye.toInt()} FCFA', AppTheme.flagGreen),
+                        _statBox('Reste à payer', '${resteAPayer.toInt()} FCFA', AppTheme.danger),
                       ],
                     ),
                   ],
@@ -127,35 +122,28 @@ class _FinancesScreenState extends State<FinancesScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Mobile Money Payment Button
               ElevatedButton.icon(
                 onPressed: () => _showPaymentModal(context, resteAPayer),
                 icon: const Icon(Icons.account_balance_wallet_rounded),
-                label: Text('Régler par Mobile Money (Orange / Moov / Wave)', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGold,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
+                label: const Text('Régler par Mobile Money (Orange / Moov / Wave)'),
+                style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
               ),
               const SizedBox(height: 28),
 
-              // Payment History
-              Text('Historique des Reçus', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('Historique des reçus', style: AppTheme.display(fontSize: 16, color: AppTheme.indigo)),
               const SizedBox(height: 12),
 
               if (_paiements.isEmpty) ...[
                 Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: AppTheme.glassDecoration(),
+                  decoration: AppTheme.cardDecoration(),
                   child: Column(
                     children: [
-                      const Icon(Icons.receipt_long_outlined, size: 40, color: Colors.white38),
+                      const Icon(Icons.receipt_long_outlined, size: 40, color: AppTheme.inkMuted),
                       const SizedBox(height: 8),
-                      Text('Aucun reçu de paiement enregistré pour le moment.', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13), textAlign: TextAlign.center),
+                      Text('Aucun reçu de paiement enregistré pour le moment.', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 13), textAlign: TextAlign.center),
                       const SizedBox(height: 4),
-                      Text('Effectuez votre premier règlement via Mobile Money ci-dessus.', style: GoogleFonts.outfit(color: AppTheme.primaryGold, fontSize: 11), textAlign: TextAlign.center),
+                      Text('Effectuez votre premier règlement via Mobile Money ci-dessus.', style: AppTheme.body(color: AppTheme.laterite, fontSize: 11), textAlign: TextAlign.center),
                     ],
                   ),
                 ),
@@ -180,9 +168,9 @@ class _FinancesScreenState extends State<FinancesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.outfit(fontSize: 11, color: Colors.white54)),
+        Text(label, style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted)),
         const SizedBox(height: 2),
-        Text(value, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+        Text(value, style: AppTheme.display(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
       ],
     );
   }
@@ -191,7 +179,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassDecoration(),
+      decoration: AppTheme.cardDecoration(),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -200,17 +188,17 @@ class _FinancesScreenState extends State<FinancesScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: AppTheme.primaryGold.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.receipt_long_rounded, color: AppTheme.primaryGold, size: 24),
+                  decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.receipt_long_rounded, color: AppTheme.laterite, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis),
+                      Text(title, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.ink), overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 2),
-                      Text('$date • $mode', style: GoogleFonts.outfit(fontSize: 11, color: Colors.white54), overflow: TextOverflow.ellipsis),
+                      Text('$date • $mode', style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -218,7 +206,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          Text(amount, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.accentEmerald)),
+          Text(amount, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.flagGreen)),
         ],
       ),
     );
@@ -227,7 +215,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
   void _showPaymentModal(BuildContext context, double reste) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.surfaceDark,
+      backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
         return Padding(
@@ -236,9 +224,9 @@ class _FinancesScreenState extends State<FinancesScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Paiement Mobile Money 🇲🇱', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('Paiement Mobile Money', style: AppTheme.display(fontSize: 18, color: AppTheme.indigo)),
               const SizedBox(height: 6),
-              Text('Reste à régler : ${reste.toInt()} FCFA', style: GoogleFonts.outfit(fontSize: 13, color: AppTheme.primaryGold)),
+              Text('Reste à régler : ${reste.toInt()} FCFA', style: AppTheme.body(fontSize: 13, color: AppTheme.laterite)),
               const SizedBox(height: 20),
 
               _operatorTile('Orange Money', Colors.orange, reste),
@@ -254,9 +242,9 @@ class _FinancesScreenState extends State<FinancesScreen> {
 
   Widget _operatorTile(String name, Color color, double reste) {
     return ListTile(
-      leading: CircleAvatar(backgroundColor: color.withValues(alpha: 0.2), child: Icon(Icons.phone_android_rounded, color: color)),
-      title: Text(name, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white)),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.white54),
+      leading: CircleAvatar(backgroundColor: color.withValues(alpha: 0.16), child: Icon(Icons.phone_android_rounded, color: color)),
+      title: Text(name, style: AppTheme.body(fontWeight: FontWeight.bold, color: AppTheme.ink)),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppTheme.inkMuted),
       onTap: () async {
         Navigator.pop(context);
         try {
@@ -273,14 +261,14 @@ class _FinancesScreenState extends State<FinancesScreen> {
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Paiement effectué et enregistré sur le serveur via $name !')),
+              SnackBar(content: Text('Paiement effectué et enregistré sur le serveur via $name.')),
             );
             _fetchFinances();
           }
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Paiement simulé avec succès via $name !')),
+              SnackBar(content: Text('Paiement simulé avec succès via $name.')),
             );
           }
         }

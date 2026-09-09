@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -24,7 +23,6 @@ class _ParentDashboardState extends State<ParentDashboard> {
   Map<String, dynamic>? _userData;
   List<dynamic> _enfants = [];
   int _selectedEnfantIndex = 0;
-  bool _isLoadingEnfants = true;
   Timer? _autoSyncTimer;
 
   @override
@@ -56,7 +54,6 @@ class _ParentDashboardState extends State<ParentDashboard> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoadingEnfants = true);
     try {
       final user = await AuthService.getUserData();
       if (mounted) setState(() => _userData = user);
@@ -71,11 +68,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
           });
         }
       }
-    } catch (_) {
-      // Fallback fallback sample child if empty
-    } finally {
-      if (mounted) setState(() => _isLoadingEnfants = false);
-    }
+    } catch (_) {}
   }
 
   @override
@@ -96,19 +89,19 @@ class _ParentDashboardState extends State<ParentDashboard> {
     ];
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppTheme.paper,
       body: pages[_selectedIndex],
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceDark,
-          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+        decoration: const BoxDecoration(
+          color: AppTheme.surface,
+          border: Border(top: BorderSide(color: AppTheme.border)),
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: (index) => setState(() => _selectedIndex = index),
-          backgroundColor: AppTheme.surfaceDark,
-          selectedItemColor: AppTheme.primaryGold,
-          unselectedItemColor: Colors.white54,
+          backgroundColor: AppTheme.surface,
+          selectedItemColor: AppTheme.indigo,
+          unselectedItemColor: AppTheme.inkMuted,
           type: BottomNavigationBarType.fixed,
           selectedFontSize: 11,
           unselectedFontSize: 11,
@@ -127,7 +120,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
   Widget _buildHomeScreen() {
     final parentPrenom = _userData?['prenom'] ?? 'Parent';
     final parentNom = _userData?['nom'] ?? '';
-    final etablissement = _userData?['etablissementNom'] ?? 'Établissement Scolaire';
+    final etablissement = _userData?['etablissementNom'] ?? 'Établissement scolaire';
 
     Map<String, dynamic>? childData;
     if (_enfants.isNotEmpty && _selectedEnfantIndex < _enfants.length) {
@@ -144,288 +137,279 @@ class _ParentDashboardState extends State<ParentDashboard> {
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _loadData,
-        color: AppTheme.primaryGold,
-        backgroundColor: AppTheme.surfaceDark,
+        color: AppTheme.indigo,
+        backgroundColor: AppTheme.surface,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top User Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Espace Parent 👪',
-                        style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Bonjour, $parentPrenom $parentNom 👋',
-                        style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        etablissement,
-                        style: GoogleFonts.outfit(fontSize: 11, color: Colors.white60, fontWeight: FontWeight.w500),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.key_rounded, color: AppTheme.primaryGold),
-                      tooltip: 'Modifier mot de passe',
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => const ChangePasswordDialog(),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.logout_rounded, color: AppTheme.accentRose),
-                      onPressed: () async {
-                        await AuthService.logout();
-                        if (mounted) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Active Child Selection Card & Multi-Children Switcher
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: AppTheme.glassDecoration(borderColor: AppTheme.primaryGold),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // En-tête utilisateur
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          'ENFANT SUIVI ACTUELLEMENT',
-                          style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGold),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ESPACE PARENT',
+                          style: AppTheme.mono(fontSize: 10, color: AppTheme.laterite, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Bonjour, $parentPrenom $parentNom 👋',
+                          style: AppTheme.display(fontSize: 20, color: AppTheme.indigo),
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: AppTheme.primaryGold.withOpacity(0.15), borderRadius: BorderRadius.circular(6)),
-                        child: Text(
-                          '${_enfants.isEmpty ? 1 : _enfants.length} Enfant(s)',
-                          style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryGold),
+                        const SizedBox(height: 2),
+                        Text(
+                          etablissement,
+                          style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted, fontWeight: FontWeight.w500),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 12),
-
-                  // Horizontal Multi-Children Switcher Bar
-                  if (_enfants.length > 1) ...[
-                    SizedBox(
-                      height: 38,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _enfants.length,
-                        itemBuilder: (context, index) {
-                          final isSelected = index == _selectedEnfantIndex;
-                          final child = _enfants[index];
-                          final prenomNom = '${child['profil']?['prenom'] ?? ''} ${child['profil']?['nom'] ?? ''}';
-                          final classeStr = child['classeNom'] ?? 'Classe';
-
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedEnfantIndex = index),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.primaryGold : Colors.white.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: isSelected ? AppTheme.primaryGold : Colors.white24),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.face_rounded, size: 16, color: isSelected ? Colors.white : AppTheme.primaryGold),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '$prenomNom ($classeStr)',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : Colors.white70,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.key_rounded, color: AppTheme.indigo),
+                        tooltip: 'Modifier le mot de passe',
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => const ChangePasswordDialog(),
                           );
                         },
                       ),
+                      IconButton(
+                        icon: const Icon(Icons.logout_rounded, color: AppTheme.danger),
+                        onPressed: () async {
+                          await AuthService.logout();
+                          if (mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Sélecteur d'enfant
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: AppTheme.cardDecoration(borderColor: AppTheme.mil.withValues(alpha: 0.5)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'ENFANT SUIVI ACTUELLEMENT',
+                            style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.inkMuted, letterSpacing: 1),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(6)),
+                          child: Text(
+                            '${_enfants.isEmpty ? 1 : _enfants.length} enfant(s)',
+                            style: AppTheme.body(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.laterite),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
+
+                    if (_enfants.length > 1) ...[
+                      SizedBox(
+                        height: 38,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _enfants.length,
+                          itemBuilder: (context, index) {
+                            final isSelected = index == _selectedEnfantIndex;
+                            final child = _enfants[index];
+                            final prenomNom = '${child['profil']?['prenom'] ?? ''} ${child['profil']?['nom'] ?? ''}';
+                            final classeStr = child['classeNom'] ?? 'Classe';
+
+                            return GestureDetector(
+                              onTap: () => setState(() => _selectedEnfantIndex = index),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppTheme.indigo : AppTheme.surfaceMuted,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: isSelected ? AppTheme.indigo : AppTheme.border),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.face_rounded, size: 16, color: isSelected ? AppTheme.paper : AppTheme.indigo),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '$prenomNom ($classeStr)',
+                                      style: AppTheme.body(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected ? AppTheme.paper : AppTheme.inkMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.indigo,
+                            border: Border.all(color: AppTheme.mil, width: 2),
+                          ),
+                          child: ClipOval(
+                            child: childPhoto != null && childPhoto.toString().startsWith('http')
+                                ? Image.network(childPhoto, fit: BoxFit.cover)
+                                : Center(
+                                    child: Text(
+                                      '${childPrenom[0]}${childNom.isNotEmpty ? childNom[0] : ''}',
+                                      style: AppTheme.display(fontWeight: FontWeight.bold, color: AppTheme.mil, fontSize: 18),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('$childPrenom $childNom', style: AppTheme.display(fontSize: 17, color: AppTheme.indigo)),
+                              const SizedBox(height: 2),
+                              Text('Matricule : $childMatricule', style: AppTheme.mono(fontSize: 12, color: AppTheme.inkMuted)),
+                              const SizedBox(height: 2),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(6)),
+                                child: Text(childClasse, style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.laterite)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
-                  Row(
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Raccourci carte numérique
+              GestureDetector(
+                onTap: () => setState(() => _selectedIndex = 1),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: AppTheme.heroDecoration(borderRadius: 16),
+                  child: Row(
                     children: [
                       Container(
-                        width: 50,
-                        height: 50,
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.primaryNavy,
-                          border: Border.all(color: AppTheme.primaryGold, width: 2),
+                          color: AppTheme.mil.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: ClipOval(
-                          child: childPhoto != null && childPhoto.toString().startsWith('http')
-                              ? Image.network(childPhoto, fit: BoxFit.cover)
-                              : Center(
-                                  child: Text(
-                                    '${childPrenom[0]}${childNom[0]}',
-                                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primaryGold, fontSize: 18),
-                                  ),
-                                ),
-                        ),
+                        child: const Icon(Icons.qr_code_2_rounded, size: 32, color: AppTheme.mil),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('$childPrenom $childNom', style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Text('Carte scolaire numérique', style: AppTheme.display(fontSize: 15, color: AppTheme.paper)),
                             const SizedBox(height: 2),
-                            Text('Matricule : $childMatricule', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white70)),
-                            const SizedBox(height: 2),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(color: AppTheme.primaryGold.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(6)),
-                              child: Text(childClasse, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGold)),
-                            ),
+                            Text('Badge élève & QR code d\'accès', style: AppTheme.body(fontSize: 11, color: AppTheme.paper.withValues(alpha: 0.75))),
                           ],
                         ),
                       ),
+                      const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.mil, size: 16),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Text('Suivi & services éducatifs', style: AppTheme.display(fontSize: 16, color: AppTheme.indigo)),
+              const SizedBox(height: 14),
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _gridCard('Bulletins & notes', 'Moyennes & relevés', Icons.article_outlined, AppTheme.indigo, () => setState(() => _selectedIndex = 2)),
+                  _gridCard('Frais scolaires', 'Paiements & reçus', Icons.payments_outlined, AppTheme.flagGreen, () => setState(() => _selectedIndex = 3)),
+                  _gridCard('Présences & retards', 'Suivi journalier', Icons.event_available_outlined, AppTheme.mil, () => setState(() => _selectedIndex = 4)),
+                  _gridCard('Emploi du temps', 'Planning des cours', Icons.calendar_today_outlined, AppTheme.laterite, () {
+                    final classeIdVal = childData?['classe']?['id'] ?? childData?['classeId'];
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EmploiDuTempsEleveScreen(
+                          eleveNom: '$childPrenom $childNom',
+                          classeNom: childClasse,
+                          classeId: classeIdVal is int ? classeIdVal : (classeIdVal != null ? int.tryParse(classeIdVal.toString()) : null),
+                        ),
+                      ),
+                    );
+                  }),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-
-            // Digital ID Card Preview Banner
-            GestureDetector(
-              onTap: () => setState(() => _selectedIndex = 1),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.primaryGold.withOpacity(0.4), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(color: AppTheme.primaryNavy.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 6)),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryGold.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.qr_code_2_rounded, size: 32, color: AppTheme.primaryGold),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Carte Scolaire Numérique', style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                          const SizedBox(height: 2),
-                          Text('Badge élève & QR Code d\'accès', style: GoogleFonts.outfit(fontSize: 11, color: Colors.white70)),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primaryGold, size: 16),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Services Grid
-            Text('Suivi & Services Éducatifs 🇲🇱', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 14),
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _gridCard('📜 Bulletins & Notes', 'Moyennes & Relevés', Icons.article_outlined, AppTheme.accentIndigo, () => setState(() => _selectedIndex = 2)),
-                _gridCard('💰 Frais Scolaires', 'Paiements & Reçus', Icons.payments_outlined, AppTheme.accentEmerald, () => setState(() => _selectedIndex = 3)),
-                _gridCard('✅ Présences & Retards', 'Suivi journalier', Icons.event_available_outlined, AppTheme.primaryGold, () => setState(() => _selectedIndex = 4)),
-                _gridCard('📅 Emploi du Temps', 'Planning des cours', Icons.calendar_today_outlined, Colors.purpleAccent, () {
-                  final classeIdVal = childData?['classe']?['id'] ?? childData?['classeId'];
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EmploiDuTempsEleveScreen(
-                        eleveNom: '$childPrenom $childNom',
-                        classeNom: childClasse,
-                        classeId: classeIdVal is int ? classeIdVal : (classeIdVal != null ? int.tryParse(classeIdVal.toString()) : null),
-                      ),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _gridCard(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: AppTheme.glassDecoration(),
+        decoration: AppTheme.cardDecoration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 26),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(title, style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.ink)),
                 const SizedBox(height: 2),
-                Text(subtitle, style: GoogleFonts.outfit(fontSize: 10, color: Colors.white54)),
+                Text(subtitle, style: AppTheme.body(fontSize: 10, color: AppTheme.inkMuted)),
               ],
             )
           ],

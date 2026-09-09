@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -89,8 +88,8 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
         SnackBar(
           content: Text(
             successCount > 0
-                ? '$successCount notes enregistrées et publiées avec succès sur le serveur !'
-                : 'Notes enregistrées et publiées pour la classe !',
+                ? '$successCount notes enregistrées et publiées avec succès sur le serveur.'
+                : 'Notes enregistrées et publiées pour la classe.',
           ),
         ),
       );
@@ -100,31 +99,25 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppTheme.paper,
       appBar: AppBar(
-        title: Text('Saisie des Notes — ${widget.classeNom}', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text('Saisie des notes — ${widget.classeNom}', style: AppTheme.display(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.indigo)),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Evaluation Config Cards
               Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: _typeEval,
                       isExpanded: true,
-                      dropdownColor: AppTheme.surfaceDark,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      decoration: InputDecoration(
+                      style: AppTheme.body(color: AppTheme.ink, fontSize: 13),
+                      decoration: const InputDecoration(
                         labelText: 'Évaluation',
-                        labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.05),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
                       items: ['Devoir N°1', 'Devoir N°2', 'Examen Trimestriel', 'Interrogation']
                           .map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis)))
@@ -137,15 +130,10 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
                     child: DropdownButtonFormField<String>(
                       value: _periode,
                       isExpanded: true,
-                      dropdownColor: AppTheme.surfaceDark,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      decoration: InputDecoration(
+                      style: AppTheme.body(color: AppTheme.ink, fontSize: 13),
+                      decoration: const InputDecoration(
                         labelText: 'Période',
-                        labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.05),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'TRIMESTRE_1', child: Text('Trimestre 1', overflow: TextOverflow.ellipsis)),
@@ -161,7 +149,7 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
 
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGold))
+                    ? const Center(child: CircularProgressIndicator(color: AppTheme.indigo))
                     : _eleves.isEmpty
                         ? Center(
                             child: Padding(
@@ -169,9 +157,9 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.edit_note_outlined, size: 48, color: Colors.white38),
+                                  const Icon(Icons.edit_note_outlined, size: 48, color: AppTheme.inkMuted),
                                   const SizedBox(height: 12),
-                                  Text('Aucun élève trouvé pour cette classe.', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14), textAlign: TextAlign.center),
+                                  Text('Aucun élève trouvé pour cette classe.', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 14), textAlign: TextAlign.center),
                                 ],
                               ),
                             ),
@@ -179,67 +167,57 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
                         : ListView.builder(
                             itemCount: _eleves.length,
                             itemBuilder: (context, index) {
-                    final eleve = _eleves[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(12),
-                      decoration: AppTheme.glassDecoration(),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  eleve['nom'],
-                                  style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                                  overflow: TextOverflow.ellipsis,
+                              final eleve = _eleves[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.all(12),
+                                decoration: AppTheme.cardDecoration(),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            eleve['nom'],
+                                            style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.ink),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(eleve['matricule'], style: AppTheme.mono(fontSize: 11, color: AppTheme.inkMuted)),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    SizedBox(
+                                      width: 90,
+                                      child: TextField(
+                                        controller: eleve['controller'],
+                                        keyboardType: TextInputType.number,
+                                        style: AppTheme.body(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 14),
+                                        decoration: const InputDecoration(
+                                          suffixText: '/20',
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 2),
-                                Text(eleve['matricule'], style: GoogleFonts.outfit(fontSize: 11, color: Colors.white54)),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 85,
-                            child: TextField(
-                              controller: eleve['controller'],
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                              decoration: InputDecoration(
-                                suffixText: '/20',
-                                suffixStyle: const TextStyle(color: Colors.white54, fontSize: 11),
-                                filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.08),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
               ),
 
               ElevatedButton.icon(
                 onPressed: _isSubmitting ? null : _submitNotes,
                 icon: _isSubmitting
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.paper))
                     : const Icon(Icons.save_rounded),
                 label: Text(
-                  _isSubmitting ? 'Enregistrement en cours...' : 'Enregistrer & Publier les Notes',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
+                  _isSubmitting ? 'Enregistrement en cours…' : 'Enregistrer & publier les notes',
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGold,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
+                style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
               ),
             ],
           ),

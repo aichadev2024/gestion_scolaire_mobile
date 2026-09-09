@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -52,12 +51,19 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
         for (var item in res) {
           final jour = (item['jourSemaine'] ?? '').toString().toUpperCase();
           int dayIdx = 0;
-          if (jour.contains('LUNDI')) dayIdx = 0;
-          else if (jour.contains('MARDI')) dayIdx = 1;
-          else if (jour.contains('MERCREDI')) dayIdx = 2;
-          else if (jour.contains('JEUDI')) dayIdx = 3;
-          else if (jour.contains('VENDREDI')) dayIdx = 4;
-          else if (jour.contains('SAMEDI')) dayIdx = 5;
+          if (jour.contains('LUNDI')) {
+            dayIdx = 0;
+          } else if (jour.contains('MARDI')) {
+            dayIdx = 1;
+          } else if (jour.contains('MERCREDI')) {
+            dayIdx = 2;
+          } else if (jour.contains('JEUDI')) {
+            dayIdx = 3;
+          } else if (jour.contains('VENDREDI')) {
+            dayIdx = 4;
+          } else if (jour.contains('SAMEDI')) {
+            dayIdx = 5;
+          }
 
           final hDebut = item['heureDebut'] ?? '';
           final hFin = item['heureFin'] ?? '';
@@ -90,19 +96,18 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
     final activeCourses = _scheduleByDay[_selectedDayIndex] ?? [];
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppTheme.paper,
       appBar: AppBar(
-        backgroundColor: AppTheme.surfaceDark,
-        elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Emploi du Temps 📅', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
-            Text('${widget.eleveNom} • ${widget.classeNom}', style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.primaryGold)),
+            Text('Emploi du temps', style: AppTheme.display(fontWeight: FontWeight.bold, color: AppTheme.indigo, fontSize: 16)),
+            Text('${widget.eleveNom} • ${widget.classeNom}', style: AppTheme.body(fontSize: 12, color: AppTheme.laterite)),
           ],
         ),
+        centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppTheme.indigo),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -111,7 +116,6 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
           children: [
             const SizedBox(height: 16),
 
-            // Day Filter Selector Chips
             SizedBox(
               height: 44,
               child: ListView.builder(
@@ -127,17 +131,17 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.primaryGold : Colors.white.withValues(alpha: 0.08),
+                        color: isSelected ? AppTheme.indigo : AppTheme.surfaceMuted,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? AppTheme.primaryGold : Colors.white.withValues(alpha: 0.15),
+                          color: isSelected ? AppTheme.indigo : AppTheme.border,
                         ),
                       ),
                       child: Text(
                         _jours[index],
-                        style: GoogleFonts.outfit(
+                        style: AppTheme.body(
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : Colors.white70,
+                          color: isSelected ? AppTheme.paper : AppTheme.inkMuted,
                           fontSize: 13,
                         ),
                       ),
@@ -148,58 +152,59 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
             ),
             const SizedBox(height: 20),
 
-            // List of Courses
             Expanded(
-              child: activeCourses.isEmpty
-                  ? Center(
-                      child: Text('Aucun cours ce jour-là 🎉', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 14)),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: activeCourses.length,
-                      itemBuilder: (context, index) {
-                        final item = activeCourses[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: AppTheme.indigo))
+                  : activeCourses.isEmpty
+                      ? Center(
+                          child: Text('Aucun cours ce jour-là', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 14)),
+                        )
+                      : ListView.builder(
                           padding: const EdgeInsets.all(16),
-                          decoration: AppTheme.glassDecoration(),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryGold.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.menu_book_rounded, color: AppTheme.primaryGold, size: 24),
+                          itemCount: activeCourses.length,
+                          itemBuilder: (context, index) {
+                            final item = activeCourses[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: AppTheme.cardDecoration(),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.mil.withValues(alpha: 0.14),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(Icons.menu_book_rounded, color: AppTheme.laterite, size: 24),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['matiere']!,
+                                          style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.ink),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${item['heure']!} • ${item['salle']!}',
+                                          style: AppTheme.body(fontSize: 12, color: AppTheme.laterite, fontWeight: FontWeight.w600),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          item['prof']!,
+                                          style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item['matiere']!,
-                                      style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${item['heure']!} • ${item['salle']!}',
-                                      style: GoogleFonts.outfit(fontSize: 12, color: AppTheme.primaryGold, fontWeight: FontWeight.w600),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item['prof']!,
-                                      style: GoogleFonts.outfit(fontSize: 11, color: Colors.white54),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),

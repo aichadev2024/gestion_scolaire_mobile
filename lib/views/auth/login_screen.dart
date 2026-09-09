@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
@@ -179,27 +180,20 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: AppTheme.surfaceDark,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('Configuration IP Serveur', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+          title: Text('Configuration IP serveur', style: AppTheme.display(fontSize: 18)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Entrez l\'adresse IP Wi-Fi de votre ordinateur pour connecter le téléphone au backend Spring Boot.',
-                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+                style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 13),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: ipController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Adresse IP du Serveur (ex: 172.20.14.254)',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                decoration: const InputDecoration(
+                  labelText: 'Adresse IP du serveur (ex: 172.20.14.254)',
                 ),
               ),
             ],
@@ -207,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler', style: TextStyle(color: Colors.white54)),
+              child: const Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -221,8 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGold),
-              child: const Text('Enregistrer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text('Enregistrer'),
             ),
           ],
         );
@@ -233,46 +226,44 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: AppTheme.paper,
       body: Stack(
         children: [
-          // Background ambient gradient circles
+          // Halos d'ambiance
           Positioned(
-            top: -80,
-            left: -80,
+            top: -90,
+            right: -90,
             child: Container(
               width: 250,
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primaryNavy.withValues(alpha: 0.5),
+                color: AppTheme.indigo.withValues(alpha: 0.08),
               ),
             ),
           ),
           Positioned(
-            bottom: -60,
-            right: -60,
+            bottom: -70,
+            left: -70,
             child: Container(
               width: 280,
               height: 280,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primaryGold.withValues(alpha: 0.2),
+                color: AppTheme.laterite.withValues(alpha: 0.08),
               ),
             ),
           ),
 
-          // Main Content
           SafeArea(
             child: Stack(
               children: [
-                // Top Right Settings Icon Button
                 Positioned(
                   top: 10,
-                  right: 16,
+                  right: 12,
                   child: IconButton(
-                    icon: const Icon(Icons.settings_outlined, color: AppTheme.primaryGold),
-                    tooltip: 'Configurer IP Serveur',
+                    icon: const Icon(Icons.settings_outlined, color: AppTheme.indigo),
+                    tooltip: 'Configurer l\'IP du serveur',
                     onPressed: _showIpConfigDialog,
                   ),
                 ),
@@ -283,79 +274,43 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Brand Icon & Badge
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: AppTheme.goldGradient,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primaryGold.withValues(alpha: 0.4),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              )
-                            ],
-                          ),
-                          child: const Icon(Icons.school_rounded, size: 48, color: Colors.white),
-                        ),
-                        const SizedBox(height: 16),
+                        SvgPicture.asset('assets/brand/netaa-mark.svg', width: 64, height: 64),
+                        const SizedBox(height: 14),
                         Text(
-                          'NETAA ÉCOLE',
-                          style: GoogleFonts.outfit(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 2,
-                          ),
+                          'Netaa École',
+                          style: AppTheme.display(fontSize: 26, color: AppTheme.indigo, fontWeight: FontWeight.w800),
                         ),
+                        const SizedBox(height: 2),
                         Text(
-                          'Portail Mobile Officiel 🇲🇱',
-                          style: GoogleFonts.outfit(
-                            fontSize: 14,
-                            color: AppTheme.primaryGold,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          'Portail mobile officiel',
+                          style: AppTheme.mono(fontSize: 10, color: AppTheme.laterite, letterSpacing: 3),
                         ),
-                        const SizedBox(height: 35),
+                        const SizedBox(height: 32),
 
-                        // Glassmorphic Login Form Card
+                        // Carte de connexion
                         Container(
                           padding: const EdgeInsets.all(24),
-                          decoration: AppTheme.glassDecoration(),
+                          decoration: AppTheme.cardDecoration(borderRadius: 20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
-                                'Connexion d\'Accès',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                                'Connexion',
+                                style: AppTheme.display(fontSize: 20, color: AppTheme.indigo),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 'Entrez vos identifiants pour accéder à votre espace',
-                                style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60),
+                                style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 24),
 
                               if (_infoMessage != null) ...[
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.accentEmerald.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: AppTheme.accentEmerald.withValues(alpha: 0.4)),
-                                  ),
-                                  child: Text(
-                                    '📧 $_infoMessage',
-                                    style: GoogleFonts.outfit(color: AppTheme.accentEmerald, fontSize: 13, fontWeight: FontWeight.w600),
-                                    textAlign: TextAlign.center,
-                                  ),
+                                _MessageBox(
+                                  text: '📧 $_infoMessage',
+                                  color: AppTheme.flagGreen,
                                 ),
                                 const SizedBox(height: 16),
                               ],
@@ -364,15 +319,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.accentRose.withValues(alpha: 0.15),
+                                    color: AppTheme.danger.withValues(alpha: 0.10),
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: AppTheme.accentRose.withValues(alpha: 0.4)),
+                                    border: Border.all(color: AppTheme.danger.withValues(alpha: 0.35)),
                                   ),
                                   child: Column(
                                     children: [
                                       Text(
                                         _errorMessage!,
-                                        style: const TextStyle(color: AppTheme.accentRose, fontSize: 13),
+                                        style: AppTheme.body(color: AppTheme.danger, fontSize: 13),
                                         textAlign: TextAlign.center,
                                       ),
                                       const SizedBox(height: 8),
@@ -383,14 +338,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              const Icon(Icons.settings_rounded, size: 16, color: AppTheme.primaryGold),
+                                              const Icon(Icons.settings_rounded, size: 16, color: AppTheme.laterite),
                                               const SizedBox(width: 6),
                                               Flexible(
                                                 child: Text(
-                                                  'Changer l\'IP du Serveur ($_currentIp)',
+                                                  'Changer l\'IP du serveur ($_currentIp)',
                                                   textAlign: TextAlign.center,
-                                                  style: GoogleFonts.outfit(
-                                                    color: AppTheme.primaryGold,
+                                                  style: AppTheme.body(
+                                                    color: AppTheme.laterite,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 12,
                                                   ),
@@ -407,17 +362,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
 
                               if (_requiresOtp) ...[
-                                const Icon(Icons.vpn_key_rounded, size: 44, color: AppTheme.primaryGold),
+                                const Icon(Icons.vpn_key_rounded, size: 44, color: AppTheme.mil),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Validation Première Connexion',
-                                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                  'Validation première connexion',
+                                  style: AppTheme.display(fontSize: 17, color: AppTheme.indigo),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Entrez le code OTP à 6 chiffres envoyé par mail',
-                                  style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60),
+                                  style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 20),
@@ -426,14 +381,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   keyboardType: TextInputType.number,
                                   maxLength: 6,
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.outfit(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 8, color: AppTheme.primaryGold),
-                                  decoration: InputDecoration(
+                                  style: AppTheme.mono(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 8, color: AppTheme.indigo),
+                                  decoration: const InputDecoration(
                                     hintText: '123456',
-                                    hintStyle: TextStyle(color: Colors.white24, letterSpacing: 8),
                                     counterText: '',
-                                    filled: true,
-                                    fillColor: Colors.white.withValues(alpha: 0.05),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                   ),
                                 ),
                                 const SizedBox(height: 20),
@@ -441,128 +392,78 @@ class _LoginScreenState extends State<LoginScreen> {
                                   height: 52,
                                   child: ElevatedButton(
                                     onPressed: _isLoading ? null : _handleOtpVerify,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.primaryGold,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                    ),
                                     child: _isLoading
-                                        ? const SpinKitThreeBounce(color: Colors.white, size: 20)
-                                        : Text('Valider le code & Entrer', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold)),
+                                        ? const SpinKitThreeBounce(color: AppTheme.paper, size: 20)
+                                        : Text('Valider le code & entrer', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold)),
                                   ),
                                 ),
-                                 const SizedBox(height: 10),
-                                 Row(
-                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                   children: [
-                                     TextButton.icon(
-                                       onPressed: _isLoading ? null : _handleResendOtp,
-                                       icon: const Icon(Icons.mark_email_read_outlined, size: 16, color: AppTheme.primaryGold),
-                                       label: const Text('Renvoyer le mail', style: TextStyle(color: AppTheme.primaryGold, fontSize: 12, fontWeight: FontWeight.bold)),
-                                     ),
-                                     TextButton(
-                                       onPressed: () => setState(() { _requiresOtp = false; _errorMessage = null; _infoMessage = null; }),
-                                       child: const Text('← Annuler', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                                     ),
-                                   ],
-                                 ),
-                              ] else ...[
-
-                              // Username Field
-                              TextField(
-                                controller: _usernameController,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: 'Nom d\'utilisateur / Email',
-                                  labelStyle: const TextStyle(color: Colors.white70),
-                                  prefixIcon: const Icon(Icons.person_outline, color: AppTheme.primaryGold),
-                                  filled: true,
-                                  fillColor: Colors.white.withValues(alpha: 0.05),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: AppTheme.primaryGold),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Password Field
-                              TextField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: 'Mot de passe',
-                                  labelStyle: const TextStyle(color: Colors.white70),
-                                  prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryGold),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                      color: Colors.white54,
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    TextButton.icon(
+                                      onPressed: _isLoading ? null : _handleResendOtp,
+                                      icon: const Icon(Icons.mark_email_read_outlined, size: 16, color: AppTheme.laterite),
+                                      label: Text('Renvoyer le mail', style: AppTheme.body(color: AppTheme.laterite, fontSize: 12, fontWeight: FontWeight.bold)),
                                     ),
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white.withValues(alpha: 0.05),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: AppTheme.primaryGold),
+                                    TextButton(
+                                      onPressed: () => setState(() { _requiresOtp = false; _errorMessage = null; _infoMessage = null; }),
+                                      child: Text('← Annuler', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 12)),
+                                    ),
+                                  ],
+                                ),
+                              ] else ...[
+                                TextField(
+                                  controller: _usernameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Nom d\'utilisateur / email',
+                                    prefixIcon: Icon(Icons.person_outline, color: AppTheme.indigo),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 24),
-
-                              // Login Submit Button
-                              SizedBox(
-                                height: 52,
-                                child: ElevatedButton(
-                                  onPressed: _isLoading ? null : () => _handleLogin(),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryGold,
-                                    foregroundColor: Colors.white,
-                                    elevation: 8,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: _passwordController,
+                                  obscureText: _obscurePassword,
+                                  decoration: InputDecoration(
+                                    labelText: 'Mot de passe',
+                                    prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.indigo),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                        color: AppTheme.inkMuted,
+                                      ),
+                                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                    ),
                                   ),
-                                  child: _isLoading
-                                      ? const SpinKitThreeBounce(color: Colors.white, size: 20)
-                                      : Text(
-                                          'Se Connecter',
-                                          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
-                                        ),
                                 ),
-                              ),
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  height: 52,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : () => _handleLogin(),
+                                    child: _isLoading
+                                        ? const SpinKitThreeBounce(color: AppTheme.paper, size: 20)
+                                        : Text(
+                                            'Se connecter',
+                                            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold),
+                                          ),
+                                  ),
+                                ),
                               ],
                             ],
                           ),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 28),
 
-                        // Quick Demo Shortcuts
-                        Text('Accès Démo Rapide', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                        Text('Accès démo rapide', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 12)),
                         const SizedBox(height: 12),
                         Wrap(
                           alignment: WrapAlignment.center,
                           spacing: 10,
                           runSpacing: 8,
                           children: [
-                            _demoChip('👪 Parent / Élève', 'parent', '123456'),
-                            _demoChip('👨‍🏫 Enseignant', 'enseignant', '123456'),
+                            _demoChip('Parent / élève', 'parent', '123456'),
+                            _demoChip('Enseignant', 'enseignant', '123456'),
                           ],
                         ),
                       ],
@@ -579,14 +480,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _demoChip(String label, String user, String pass) {
     return ActionChip(
-      backgroundColor: Colors.white.withValues(alpha: 0.08),
-      side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-      label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+      label: Text(label),
       onPressed: () {
         _usernameController.text = user;
         _passwordController.text = pass;
         _handleLogin(user, pass);
       },
+    );
+  }
+}
+
+class _MessageBox extends StatelessWidget {
+  const _MessageBox({required this.text, required this.color});
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        text,
+        style: AppTheme.body(color: color, fontSize: 13, fontWeight: FontWeight.w600),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }

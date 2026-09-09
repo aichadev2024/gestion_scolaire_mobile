@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -77,37 +76,36 @@ class _PresencesScreenState extends State<PresencesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Suivi des Présences', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text('Suivi des présences', style: AppTheme.display(fontSize: 20, color: AppTheme.indigo)),
             const SizedBox(height: 4),
-            Text('Historique des présences et retards en temps réel 🇲🇱', style: GoogleFonts.outfit(fontSize: 12, color: Colors.white60)),
+            Text('Historique des présences et retards en temps réel', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
             const SizedBox(height: 20),
 
-            // Summary Badges
             Row(
               children: [
-                Expanded(child: _badgeBox('Présents', '$tauxPresence%', AppTheme.accentEmerald)),
+                Expanded(child: _badgeBox('Présents', '$tauxPresence%', AppTheme.flagGreen)),
                 const SizedBox(width: 10),
-                Expanded(child: _badgeBox('Absences', '$nbAbsents', AppTheme.accentRose)),
+                Expanded(child: _badgeBox('Absences', '$nbAbsents', AppTheme.danger)),
                 const SizedBox(width: 10),
-                Expanded(child: _badgeBox('Retards', '$nbRetards', AppTheme.primaryGold)),
+                Expanded(child: _badgeBox('Retards', '$nbRetards', AppTheme.laterite)),
               ],
             ),
             const SizedBox(height: 28),
 
-            Text('Journal des cours', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text('Journal des cours', style: AppTheme.display(fontSize: 16, color: AppTheme.indigo)),
             const SizedBox(height: 12),
 
             if (_isLoading)
-              const Center(child: SpinKitPulse(color: AppTheme.primaryGold, size: 40))
+              const Center(child: SpinKitPulse(color: AppTheme.indigo, size: 40))
             else if (_presences.isEmpty) ...[
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: AppTheme.glassDecoration(),
+                decoration: AppTheme.cardDecoration(),
                 child: Column(
                   children: [
-                    const Icon(Icons.event_available_outlined, size: 40, color: Colors.white38),
+                    const Icon(Icons.event_available_outlined, size: 40, color: AppTheme.inkMuted),
                     const SizedBox(height: 8),
-                    Text('Aucun enregistrement de présence pour le moment.', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13), textAlign: TextAlign.center),
+                    Text('Aucun enregistrement de présence pour le moment.', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 13), textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -116,9 +114,9 @@ class _PresencesScreenState extends State<PresencesScreen> {
                 final dateStr = (p['dateSeance'] ?? p['date'] ?? 'Aujourd\'hui').toString();
                 final matiereStr = (p['matiereNom'] ?? p['matiere'] ?? 'Cours').toString();
                 final statutStr = (p['statut'] ?? 'PRESENT').toString().toUpperCase();
-                Color color = AppTheme.accentEmerald;
-                if (statutStr.contains('ABSENT')) color = AppTheme.accentRose;
-                if (statutStr.contains('RETARD')) color = AppTheme.primaryGold;
+                Color color = AppTheme.flagGreen;
+                if (statutStr.contains('ABSENT')) color = AppTheme.danger;
+                if (statutStr.contains('RETARD')) color = AppTheme.laterite;
 
                 return _presenceRow(dateStr, matiereStr, statutStr, color);
               }),
@@ -132,12 +130,12 @@ class _PresencesScreenState extends State<PresencesScreen> {
   Widget _badgeBox(String label, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      decoration: AppTheme.glassDecoration(borderColor: color.withValues(alpha: 0.4)),
+      decoration: AppTheme.cardDecoration(borderColor: color.withValues(alpha: 0.4)),
       child: Column(
         children: [
-          Text(value, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+          Text(value, style: AppTheme.display(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
           const SizedBox(height: 2),
-          Text(label, style: GoogleFonts.outfit(fontSize: 11, color: Colors.white70)),
+          Text(label, style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted)),
         ],
       ),
     );
@@ -147,7 +145,7 @@ class _PresencesScreenState extends State<PresencesScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassDecoration(),
+      decoration: AppTheme.cardDecoration(),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -155,17 +153,17 @@ class _PresencesScreenState extends State<PresencesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(subject, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis),
+                Text(subject, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.ink), overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
-                Text(date, style: GoogleFonts.outfit(fontSize: 11, color: Colors.white54), overflow: TextOverflow.ellipsis),
+                Text(date, style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted), overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-            child: Text(status, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(8)),
+            child: Text(status, style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
           ),
         ],
       ),
