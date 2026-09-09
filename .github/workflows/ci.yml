@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flutter:
+    name: Analyse · Tests · Build web (Flutter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.32.8'
+          cache: true
+
+      - run: flutter pub get
+
+      # Des `info`/`warning` hérités subsistent dans d'anciens écrans (voir dette
+      # technique) : on ne bloque pas dessus pour l'instant, seul un vrai `error` casse la CI.
+      - name: Analyse statique
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Tests
+        run: flutter test
+
+      - name: Build web (release)
+        run: flutter build web --release
+
+      - name: Publier le build web
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+          retention-days: 14
+
+  deploy-web:
+    name: Déploiement Vercel (si VERCEL_TOKEN présent)
+    needs: flutter
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier la présence du token Vercel
+        id: gate
+        run: |
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::VERCEL_TOKEN absent — déploiement ignoré. Ajoutez le secret pour l'activer."
+          fi
+
+      - uses: subosito/flutter-action@v2
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          channel: stable
+          flutter-version: '3.32.8'
+          cache: true
+
+      - name: Build web
+        if: steps.gate.outputs.ready == 'true'
+        run: flutter pub get && flutter build web --release
+
+      - name: Déployer sur Vercel
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          npm i -g vercel
+          vercel deploy build/web --prod --yes --token "${{ secrets.VERCEL_TOKEN }}"
