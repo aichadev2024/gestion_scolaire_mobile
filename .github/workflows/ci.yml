@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -47,7 +47,7 @@ jobs:
     name: Déploiement Vercel (si VERCEL_TOKEN présent)
     needs: flutter
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
@@ -85,6 +85,11 @@ jobs:
 
       - name: Déployer sur Vercel
         if: steps.gate.outputs.ready == 'true'
+        env:
+          # Ces deux-là ciblent le projet Vercel EXISTANT (sinon la CLI en crée
+          # un nouveau avec une autre URL). Récupérables via `vercel link` en local.
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          npm i -g vercel
+          npm i -g vercel@latest
           vercel deploy build/web --prod --yes --token "${{ secrets.VERCEL_TOKEN }}"
