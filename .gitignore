@@ -32,16 +32,10 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-# Exception : le build web est versionné pour le déploiement Vercel
-# (Vercel ne sait pas compiler Flutter). À régénérer avec :
+# build/web n'est plus versionné : la CI (job deploy-web) compile Flutter web
+# et déploie sur Vercel à chaque push sur master. Build manuel de secours :
 #   flutter build web --release --dart-define=API_BASE_URL=<url backend>/api
-!/build/
-/build/*
-!/build/web/
-!/build/web/**
-# artefacts non nécessaires à l'exécution
-/build/web/.last_build_id
-/build/web/**/*.symbols
+#   npx vercel deploy build/web --prod
 
 # Symbolication related
 app.*.symbols
