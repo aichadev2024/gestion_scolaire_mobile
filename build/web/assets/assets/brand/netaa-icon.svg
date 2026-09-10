@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Netaa École">
+  <rect width="120" height="120" rx="27" fill="#22315B"/>
+  <g transform="translate(60,58)">
+    <path d="M0,-34 Q5,-9 30,-3 Q5,3 0,29 Q-5,3 -30,-3 Q-5,-9 0,-34 Z" fill="#DCA338"/>
+    <path d="M0,5 C-13,-2 -32,-2 -42,4 L-42,34 C-32,28 -13,28 0,36 Z" fill="#F3ECDA"/>
+    <path d="M0,5 C13,-2 32,-2 42,4 L42,34 C32,28 13,28 0,36 Z" fill="#F3ECDA"/>
+  </g>
+</svg>

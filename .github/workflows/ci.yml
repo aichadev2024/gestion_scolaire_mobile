@@ -92,6 +92,4 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           npm i -g vercel@latest
-          # config minimale pour le dossier statique : fallback SPA
-          printf '{"routes":[{"handle":"filesystem"},{"src":"/.*","dest":"/index.html"}]}' > build/web/vercel.json
-          cd build/web && vercel deploy --prod --yes --token "${{ secrets.VERCEL_TOKEN }}"
+          vercel deploy build/web --prod --yes --token "${{ secrets.VERCEL_TOKEN }}"
