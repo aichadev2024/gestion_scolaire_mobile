@@ -246,16 +246,29 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: AppTheme.cardDecoration(),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(note.matiereNom, style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.ink)),
-                            const SizedBox(height: 2),
-                            Text('Coef. ${note.coefficient.toInt()} • ${note.typeEvaluation}', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                note.matiereNom,
+                                style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.ink),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Coef. ${note.coefficient.toInt()} • ${note.typeEvaluation}',
+                                style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
