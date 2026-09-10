@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/avatar_photo.dart';
 import '../../core/router/app_router.dart';
 import '../auth/change_password_dialog.dart';
 import 'carte_scolaire_screen.dart';
@@ -183,14 +184,11 @@ class _EleveDashboardState extends State<EleveDashboard> {
                         border: Border.all(color: AppTheme.mil, width: 2),
                       ),
                       child: ClipOval(
-                        child: photoUrl != null && photoUrl.toString().startsWith('http')
-                            ? Image.network(photoUrl, fit: BoxFit.cover)
-                            : Center(
-                                child: Text(
-                                  '${prenom.isNotEmpty ? prenom[0] : 'E'}${nom.isNotEmpty ? nom[0] : 'L'}',
-                                  style: AppTheme.display(fontWeight: FontWeight.bold, color: AppTheme.mil, fontSize: 22),
-                                ),
-                              ),
+                        child: avatarContent(
+                          photoUrl?.toString(),
+                          '${prenom.isNotEmpty ? prenom[0] : 'E'}${nom.isNotEmpty ? nom[0] : 'L'}',
+                          fontSize: 22,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 14),

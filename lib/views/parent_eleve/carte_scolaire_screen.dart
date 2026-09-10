@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/avatar_photo.dart';
 
 class CarteScolaireScreen extends StatefulWidget {
   final Map<String, dynamic>? eleveData;
@@ -149,14 +150,11 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                           color: AppTheme.indigoDeep,
                         ),
                         child: ClipOval(
-                          child: photoUrl != null && photoUrl.toString().startsWith('http')
-                              ? Image.network(photoUrl, fit: BoxFit.cover)
-                              : Center(
-                                  child: Text(
-                                    '${prenom.isNotEmpty ? prenom[0] : 'E'}${nom.isNotEmpty ? nom[0] : 'L'}',
-                                    style: AppTheme.display(fontWeight: FontWeight.bold, color: AppTheme.mil, fontSize: 24),
-                                  ),
-                                ),
+                          child: avatarContent(
+                            photoUrl?.toString(),
+                            '${prenom.isNotEmpty ? prenom[0] : 'E'}${nom.isNotEmpty ? nom[0] : 'L'}',
+                            fontSize: 24,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
