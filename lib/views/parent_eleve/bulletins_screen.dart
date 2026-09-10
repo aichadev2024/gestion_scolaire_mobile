@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/document_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/eleve_model.dart';
 
@@ -17,8 +18,38 @@ class BulletinsScreen extends StatefulWidget {
 class _BulletinsScreenState extends State<BulletinsScreen> {
   String _selectedPeriode = 'TRIMESTRE_1';
   bool _isLoading = true;
+  bool _pdfBusy = false;
   BulletinModel? _bulletin;
   Map<String, dynamic>? _userData;
+
+  String get _etablissementNom =>
+      (_userData?['etablissementNom'] as String?)?.trim().isNotEmpty == true
+          ? _userData!['etablissementNom']
+          : 'Établissement scolaire';
+
+  Future<void> _genererPdf({required bool partager}) async {
+    final b = _bulletin;
+    if (b == null || _pdfBusy) return;
+    setState(() => _pdfBusy = true);
+    try {
+      final bytes =
+          await DocumentService.buildBulletinPdf(b, etablissement: _etablissementNom);
+      final fichier = 'bulletin_${b.eleveMatricule}_${b.periode}.pdf';
+      if (partager) {
+        await DocumentService.partager(bytes, fichier);
+      } else {
+        await DocumentService.imprimer(bytes, nom: fichier);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible de générer le PDF : $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pdfBusy = false);
+    }
+  }
 
   @override
   void initState() {
@@ -197,17 +228,32 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Téléchargement du bulletin officiel PDF certifié…')),
-                        );
-                      },
-                      icon: const Icon(Icons.download_rounded, size: 18),
-                      label: const Text('Télécharger le bulletin officiel (PDF)'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 44),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _pdfBusy ? null : () => _genererPdf(partager: false),
+                            icon: _pdfBusy
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Icon(Icons.print_rounded, size: 18),
+                            label: const Text('Imprimer'),
+                            style: ElevatedButton.styleFrom(minimumSize: const Size(0, 44)),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pdfBusy ? null : () => _genererPdf(partager: true),
+                            icon: const Icon(Icons.download_rounded, size: 18),
+                            label: const Text('Télécharger'),
+                            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -238,56 +284,115 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _bulletin!.notes.length,
+                itemCount: _bulletin!.lignes.length,
                 itemBuilder: (context, index) {
-                  final note = _bulletin!.notes[index];
+                  final ligne = _bulletin!.lignes[index];
+                  final moy = ligne.moyenneEleve;
+                  final okColor = moy >= 10 ? AppTheme.flagGreen : AppTheme.danger;
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(16),
                     decoration: AppTheme.cardDecoration(),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                note.matiereNom,
-                                style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.ink),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    ligne.matiereNom,
+                                    style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.ink),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Coefficient ${_light(ligne.coefficient)}',
+                                    style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Coef. ${note.coefficient.toInt()} • ${note.typeEvaluation}',
-                                style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: okColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                            ],
-                          ),
+                              child: Text(
+                                moy > 0 ? '${moy.toStringAsFixed(2)} / 20' : '—',
+                                style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: okColor),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: (note.valeur >= 10 ? AppTheme.flagGreen : AppTheme.danger).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
+                        if (ligne.notes.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: ligne.notes.map((n) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surfaceMuted,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${n.typeEvaluation} : ${_light(n.valeur)}/${_light(n.noteMax)}',
+                                  style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted),
+                                ),
+                              );
+                            }).toList(),
                           ),
-                          child: Text(
-                            '${note.valeur.toStringAsFixed(1)} / ${note.noteMax.toInt()}',
-                            style: AppTheme.body(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: note.valeur >= 10 ? AppTheme.flagGreen : AppTheme.danger,
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.mil.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Total obtenu (avant moyenne)',
+                                    style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted)),
+                                Text(
+                                  '${_light(ligne.totalObtenu)} / ${_light(ligne.totalBareme)}',
+                                  style: AppTheme.mono(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.indigo),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   );
                 },
+              ),
+              const SizedBox(height: 12),
+              // Récapitulatif du calcul de la moyenne générale
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: AppTheme.cardDecoration(borderColor: AppTheme.indigo.withValues(alpha: 0.3)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _recapLine('Total des coefficients', _light(_bulletin!.totalCoefficients)),
+                    _recapLine('Total des points (Σ moyenne × coef.)', _bulletin!.totalPoints.toStringAsFixed(2)),
+                    const Divider(height: 18),
+                    _recapLine(
+                      'Moyenne générale = ${_bulletin!.totalPoints.toStringAsFixed(2)} ÷ ${_light(_bulletin!.totalCoefficients)}',
+                      '${(_bulletin!.moyenneGenerale > 0 ? _bulletin!.moyenneGenerale : _bulletin!.moyenneCalculee).toStringAsFixed(2)} / 20',
+                      strong: true,
+                    ),
+                  ],
+                ),
               ),
             ] else ...[
               Container(
@@ -304,6 +409,43 @@ class _BulletinsScreenState extends State<BulletinsScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  /// Affiche un nombre sans les « .00 » superflus (2 → « 2 », 1.5 → « 1.50 »).
+  String _light(double v) {
+    final s = v.toStringAsFixed(2);
+    return s.endsWith('.00') ? v.toStringAsFixed(0) : s;
+  }
+
+  Widget _recapLine(String label, String value, {bool strong = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: AppTheme.body(
+                fontSize: strong ? 13 : 12,
+                fontWeight: strong ? FontWeight.bold : FontWeight.normal,
+                color: strong ? AppTheme.indigo : AppTheme.inkMuted,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            value,
+            style: AppTheme.mono(
+              fontSize: strong ? 14 : 12,
+              fontWeight: FontWeight.bold,
+              color: strong ? AppTheme.flagGreen : AppTheme.ink,
+            ),
+          ),
+        ],
       ),
     );
   }

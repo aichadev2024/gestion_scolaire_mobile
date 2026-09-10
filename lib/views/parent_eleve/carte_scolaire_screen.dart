@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/document_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/avatar_photo.dart';
 
@@ -17,6 +18,42 @@ class CarteScolaireScreen extends StatefulWidget {
 class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
   Map<String, dynamic>? _userData;
   Map<String, dynamic>? _fetchedChildData;
+  bool _cardBusy = false;
+
+  Future<void> _exportCarte({
+    required bool partager,
+    required String prenom,
+    required String nom,
+    required String matricule,
+    required String classe,
+    required String etablissement,
+  }) async {
+    if (_cardBusy) return;
+    setState(() => _cardBusy = true);
+    try {
+      final bytes = await DocumentService.buildCartePdf(
+        prenom: prenom,
+        nom: nom,
+        matricule: matricule,
+        classe: classe,
+        etablissement: etablissement,
+      );
+      final fichier = 'carte_scolaire_$matricule.pdf';
+      if (partager) {
+        await DocumentService.partager(bytes, fichier);
+      } else {
+        await DocumentService.imprimer(bytes, nom: fichier);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible de générer la carte : $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _cardBusy = false);
+    }
+  }
 
   @override
   void initState() {
@@ -209,15 +246,50 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
             ),
             const SizedBox(height: 24),
 
-            ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Carte téléchargée dans votre galerie.')),
-                );
-              },
-              icon: const Icon(Icons.download_rounded),
-              label: const Text('Enregistrer le pass numérique'),
-              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _cardBusy
+                        ? null
+                        : () => _exportCarte(
+                              partager: false,
+                              prenom: prenom.toString(),
+                              nom: nom.toString(),
+                              matricule: matricule.toString(),
+                              classe: classe.toString(),
+                              etablissement: etablissement.toString(),
+                            ),
+                    icon: _cardBusy
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.print_rounded),
+                    label: const Text('Imprimer'),
+                    style: ElevatedButton.styleFrom(minimumSize: const Size(0, 50)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _cardBusy
+                        ? null
+                        : () => _exportCarte(
+                              partager: true,
+                              prenom: prenom.toString(),
+                              nom: nom.toString(),
+                              matricule: matricule.toString(),
+                              classe: classe.toString(),
+                              etablissement: etablissement.toString(),
+                            ),
+                    icon: const Icon(Icons.download_rounded),
+                    label: const Text('Télécharger'),
+                    style: OutlinedButton.styleFrom(minimumSize: const Size(0, 50)),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

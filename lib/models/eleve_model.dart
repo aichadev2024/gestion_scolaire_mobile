@@ -52,6 +52,50 @@ class NoteModel {
   }
 }
 
+/// Une matière du bulletin : moyenne de l'élève, coefficient et le détail des
+/// notes qui ont servi au calcul (on veut voir le total obtenu avant la moyenne).
+class LigneBulletin {
+  final String matiereNom;
+  final double coefficient;
+  final double moyenneEleve;
+  final List<NoteModel> notes;
+
+  LigneBulletin({
+    required this.matiereNom,
+    required this.coefficient,
+    required this.moyenneEleve,
+    required this.notes,
+  });
+
+  /// Somme des notes obtenues (avant conversion en moyenne).
+  double get totalObtenu => notes.fold(0.0, (s, n) => s + n.valeur);
+
+  /// Somme des barèmes correspondants.
+  double get totalBareme => notes.fold(0.0, (s, n) => s + n.noteMax);
+
+  /// Points de la matière dans la moyenne générale.
+  double get points => moyenneEleve * coefficient;
+
+  factory LigneBulletin.fromJson(Map<String, dynamic> l) {
+    final inner = l['notes'] as List? ?? [];
+    final coef = (l['coefficient'] ?? 1).toDouble();
+    return LigneBulletin(
+      matiereNom: l['matiereNom'] ?? '',
+      coefficient: coef,
+      moyenneEleve: (l['moyenneEleve'] ?? 0).toDouble(),
+      notes: inner
+          .map<NoteModel>((n) => NoteModel(
+                matiereNom: l['matiereNom'] ?? '',
+                valeur: (n['valeur'] ?? 0).toDouble(),
+                noteMax: (n['noteMax'] ?? 20).toDouble(),
+                coefficient: coef,
+                typeEvaluation: n['typeEvaluation'] ?? 'Devoir',
+              ))
+          .toList(),
+    );
+  }
+}
+
 class BulletinModel {
   final String eleveNom;
   final String elevePrenom;
@@ -64,7 +108,8 @@ class BulletinModel {
   final bool estVerrouille;
   final int? rang;
   final int? effectifClasse;
-  final List<NoteModel> notes;
+  final List<LigneBulletin> lignes;
+  final List<NoteModel> notes; // liste à plat, conservée pour compatibilité
 
   BulletinModel({
     required this.eleveNom,
@@ -78,24 +123,23 @@ class BulletinModel {
     required this.estVerrouille,
     this.rang,
     this.effectifClasse,
+    required this.lignes,
     required this.notes,
   });
 
+  double get totalCoefficients => lignes.fold(0.0, (s, l) => s + l.coefficient);
+  double get totalPoints => lignes.fold(0.0, (s, l) => s + l.points);
+
+  /// Moyenne recalculée à partir des totaux (pour afficher le calcul).
+  double get moyenneCalculee =>
+      totalCoefficients > 0 ? totalPoints / totalCoefficients : 0;
+
   factory BulletinModel.fromJson(Map<String, dynamic> json) {
-    var rawNotes = json['lignes'] as List? ?? [];
-    List<NoteModel> noteList = [];
-    for (var l in rawNotes) {
-      var innerNotes = l['notes'] as List? ?? [];
-      for (var n in innerNotes) {
-        noteList.add(NoteModel(
-          matiereNom: l['matiereNom'] ?? '',
-          valeur: (n['valeur'] ?? 0).toDouble(),
-          noteMax: (n['noteMax'] ?? 20).toDouble(),
-          coefficient: (l['coefficient'] ?? 1).toDouble(),
-          typeEvaluation: n['typeEvaluation'] ?? 'Devoir',
-        ));
-      }
-    }
+    final rawLignes = json['lignes'] as List? ?? [];
+    final lignes = rawLignes
+        .map<LigneBulletin>((l) => LigneBulletin.fromJson(Map<String, dynamic>.from(l)))
+        .toList();
+    final flat = <NoteModel>[for (final l in lignes) ...l.notes];
 
     return BulletinModel(
       eleveNom: json['eleveNom'] ?? '',
@@ -109,7 +153,8 @@ class BulletinModel {
       estVerrouille: json['estVerrouille'] ?? false,
       rang: json['rang'],
       effectifClasse: json['effectifClasse'],
-      notes: noteList,
+      lignes: lignes,
+      notes: flat,
     );
   }
 }
