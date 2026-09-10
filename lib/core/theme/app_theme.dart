@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Identité Netaa École — « Bògòlan ».
-/// Indigo *gàra*, terre latéritique, or du mil, papier écru chaud.
+/// Indigo *gàra*, terre latéritique, accent bleu, papier écru chaud.
 ///
 /// L'application mobile est **claire** par défaut (usage quotidien, plein soleil).
 /// Les anciens alias sombres restent définis pour compatibilité mais pointent
@@ -12,7 +12,7 @@ class AppTheme {
   static const Color indigo = Color(0xFF22315B); // gàra
   static const Color indigoDeep = Color(0xFF161F3A);
   static const Color laterite = Color(0xFFB24A2A); // terre de Djenné
-  static const Color mil = Color(0xFFDCA338); // or / savane
+  static const Color mil = Color(0xFF2E7CB8); // accent bleu (ex-« or du mil »)
   static const Color cream = Color(0xFFEFE3CD); // coton écru
   static const Color paper = Color(0xFFFAF6EE); // fond clair
   static const Color sand = Color(0xFFE6D7B8);
@@ -50,7 +50,7 @@ class AppTheme {
   );
 
   static const LinearGradient goldGradient = LinearGradient(
-    colors: [Color(0xFFE7B457), mil],
+    colors: [Color(0xFF5AA9DC), mil],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
