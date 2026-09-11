@@ -11,6 +11,7 @@ import 'bulletins_screen.dart';
 import 'finances_screen.dart';
 import 'presences_screen.dart';
 import 'emploi_du_temps_eleve_screen.dart';
+import 'notifications_screen.dart';
 
 class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
@@ -25,11 +26,13 @@ class _ParentDashboardState extends State<ParentDashboard> {
   List<dynamic> _enfants = [];
   int _selectedEnfantIndex = 0;
   Timer? _autoSyncTimer;
+  int _notificationsNonLues = 0;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _syncEnfantsSilent();
     _autoSyncTimer = Timer.periodic(const Duration(seconds: 5), (_) => _syncEnfantsSilent());
   }
 
@@ -49,6 +52,10 @@ class _ParentDashboardState extends State<ParentDashboard> {
           setState(() {
             _enfants = res;
           });
+        }
+        final nonLues = await ApiService.get('/notifications/destinataire/$parentUserId/non-lues');
+        if (nonLues is List && mounted) {
+          setState(() => _notificationsNonLues = nonLues.length);
         }
       }
     } catch (_) {}
@@ -175,6 +182,37 @@ class _ParentDashboardState extends State<ParentDashboard> {
                   ),
                   Row(
                     children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications_rounded, color: AppTheme.indigo),
+                            tooltip: 'Notifications',
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                              );
+                              _syncEnfantsSilent();
+                            },
+                          ),
+                          if (_notificationsNonLues > 0)
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: const BoxDecoration(color: AppTheme.laterite, shape: BoxShape.circle),
+                                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                child: Text(
+                                  _notificationsNonLues > 9 ? '9+' : '$_notificationsNonLues',
+                                  textAlign: TextAlign.center,
+                                  style: AppTheme.body(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.paper),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                       IconButton(
                         icon: const Icon(Icons.key_rounded, color: AppTheme.indigo),
                         tooltip: 'Modifier le mot de passe',

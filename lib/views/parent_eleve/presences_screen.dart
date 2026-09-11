@@ -16,6 +16,7 @@ class PresencesScreen extends StatefulWidget {
 class _PresencesScreenState extends State<PresencesScreen> {
   bool _isLoading = true;
   List<dynamic> _presences = [];
+  String? _role;
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _PresencesScreenState extends State<PresencesScreen> {
       if (data is List && mounted) {
         setState(() {
           _presences = data;
+          _role = userData?['role']?.toString();
         });
       }
     } catch (_) {
@@ -110,16 +112,7 @@ class _PresencesScreenState extends State<PresencesScreen> {
                 ),
               ),
             ] else ...[
-              ..._presences.map((p) {
-                final dateStr = (p['dateSeance'] ?? p['date'] ?? 'Aujourd\'hui').toString();
-                final matiereStr = (p['matiereNom'] ?? p['matiere'] ?? 'Cours').toString();
-                final statutStr = (p['statut'] ?? 'PRESENT').toString().toUpperCase();
-                Color color = AppTheme.flagGreen;
-                if (statutStr.contains('ABSENT')) color = AppTheme.danger;
-                if (statutStr.contains('RETARD')) color = AppTheme.laterite;
-
-                return _presenceRow(dateStr, matiereStr, statutStr, color);
-              }),
+              ..._presences.map((p) => _presenceRow(p)),
             ],
           ],
         ),
@@ -141,32 +134,126 @@ class _PresencesScreenState extends State<PresencesScreen> {
     );
   }
 
-  Widget _presenceRow(String date, String subject, String status, Color color) {
+  Widget _presenceRow(Map<String, dynamic> p) {
+    final id = p['id'];
+    final dateStr = (p['dateSeance'] ?? p['date'] ?? 'Aujourd\'hui').toString();
+    final matiereStr = (p['matiereNom'] ?? p['matiere'] ?? 'Cours').toString();
+    final statutStr = (p['statut'] ?? 'PRESENT').toString().toUpperCase();
+    final estJustifie = p['estJustifie'] == true;
+    final notes = (p['notesJustification'] as String?)?.trim();
+    final concerne = statutStr.contains('ABSENT') || statutStr.contains('RETARD');
+
+    Color color = AppTheme.flagGreen;
+    if (statutStr.contains('ABSENT')) color = AppTheme.danger;
+    if (statutStr.contains('RETARD')) color = AppTheme.laterite;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: AppTheme.cardDecoration(),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(subject, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.ink), overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Text(date, style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted), overflow: TextOverflow.ellipsis),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(matiereStr, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.ink), overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Text(dateStr, style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted), overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(8)),
+                child: Text(statutStr, style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(8)),
-            child: Text(status, style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+          if (concerne) ...[
+            const SizedBox(height: 10),
+            if (estJustifie)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: AppTheme.flagGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle, size: 16, color: AppTheme.flagGreen),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        notes != null && notes.isNotEmpty ? 'Justifié : $notes' : 'Justifié',
+                        style: AppTheme.body(fontSize: 12, color: AppTheme.ink),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (id != null && _role == 'PARENT')
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _ouvrirJustification(id),
+                  icon: const Icon(Icons.edit_note, size: 18),
+                  label: const Text('Justifier'),
+                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 38)),
+                ),
+              )
+            else
+              Text('Non justifié', style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _ouvrirJustification(dynamic presenceId) async {
+    final controller = TextEditingController();
+    final motif = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Justifier l\'absence / le retard'),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Ex : rendez-vous médical, problème de transport…',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Envoyer à la direction'),
           ),
         ],
       ),
     );
+    if (motif == null || motif.isEmpty) return;
+
+    try {
+      await ApiService.patch('/presences/$presenceId/justifier', {'notesJustification': motif});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Justification envoyée à la direction.')),
+        );
+      }
+      _fetchPresences();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de l\'envoi : $e')),
+        );
+      }
+    }
   }
 }

@@ -64,6 +64,16 @@ class ApiService {
     return _handleResponse(response);
   }
 
+  static Future<dynamic> patch(String endpoint, [Map<String, dynamic>? body]) async {
+    final headers = await _getHeaders();
+    final baseUrl = await getBaseUrl();
+    final url = Uri.parse('$baseUrl$endpoint');
+    final response = await http
+        .patch(url, headers: headers, body: body != null ? jsonEncode(body) : null)
+        .timeout(const Duration(seconds: 10));
+    return _handleResponse(response);
+  }
+
   static dynamic _handleResponse(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) return null;
