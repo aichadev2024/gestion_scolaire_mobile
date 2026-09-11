@@ -1,6 +1,9 @@
 {
   "version": 2,
   "outputDirectory": "build/web",
+  "git": {
+    "deploymentEnabled": false
+  },
   "routes": [
     {
       "handle": "filesystem"
