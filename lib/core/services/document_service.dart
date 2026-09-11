@@ -447,6 +447,33 @@ class DocumentService {
               ],
             ),
 
+            if (b.urlVerification != null) ...[
+              pw.SizedBox(height: 12),
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Container(
+                    padding: const pw.EdgeInsets.all(3),
+                    color: PdfColors.white,
+                    child: pw.BarcodeWidget(
+                      barcode: pw.Barcode.qrCode(),
+                      data: b.urlVerification!,
+                      width: 48,
+                      height: 48,
+                      drawText: false,
+                    ),
+                  ),
+                  pw.SizedBox(width: 8),
+                  pw.Expanded(
+                    child: pw.Text(
+                      'Document vérifiable — scannez ce QR ou consultez\n${b.urlVerification}',
+                      style: pw.TextStyle(fontSize: 7, color: PdfColors.grey700),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
             pw.Spacer(),
             pw.Divider(color: _grisLigne, thickness: 0.5),
             pw.Row(

@@ -110,6 +110,9 @@ class BulletinModel {
   final int? effectifClasse;
   final List<LigneBulletin> lignes;
   final List<NoteModel> notes; // liste à plat, conservée pour compatibilité
+  /// URL publique de vérification (QR) — calculée côté serveur, null si le
+  /// bulletin n'a pas encore été généré au moins une fois.
+  final String? urlVerification;
 
   BulletinModel({
     required this.eleveNom,
@@ -125,6 +128,7 @@ class BulletinModel {
     this.effectifClasse,
     required this.lignes,
     required this.notes,
+    this.urlVerification,
   });
 
   double get totalCoefficients => lignes.fold(0.0, (s, l) => s + l.coefficient);
@@ -155,6 +159,7 @@ class BulletinModel {
       effectifClasse: json['effectifClasse'],
       lignes: lignes,
       notes: flat,
+      urlVerification: json['urlVerification'],
     );
   }
 }
