@@ -30,7 +30,7 @@ const RESOURCES = {"apple-touch-icon-precomposed.png": "fc3af4883f41724e66492eff
 "canvaskit/skwasm.wasm": "39dd80367a4e71582d234948adc521c0",
 "favicon.png": "1ac79b26bf9d94a732a70d9e4870eacf",
 "flutter.js": "83d881c1dbb6d6bcd6b42e274605b69c",
-"flutter_bootstrap.js": "9c9730aafc2085cd5f6336879606315f",
+"flutter_bootstrap.js": "5a6f98ec17e227bd63abd52575c1b33e",
 "icons/Icon-192.png": "f4b732e0f55acf1bca5476a90fb1a5a6",
 "icons/Icon-512.png": "56b97242254a3829b540700a4a59c42e",
 "icons/Icon-maskable-192.png": "58c7149306ce0ba45a8e2f16bca9f44c",
