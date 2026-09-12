@@ -18,6 +18,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
   double _totalAPayer = 350000;
   double _dejaPaye = 250000;
   List<dynamic> _paiements = [];
+  String _devise = 'FCFA';
 
   @override
   void initState() {
@@ -38,6 +39,8 @@ class _FinancesScreenState extends State<FinancesScreen> {
     try {
       final userData = await AuthService.getUserData();
       final targetEleveId = widget.eleveId ?? userData?['eleveId'] ?? userData?['id'] ?? 1;
+      final devise = (userData?['etablissementDevise'] as String?)?.trim();
+      if (devise != null && devise.isNotEmpty) _devise = devise;
 
       final dataPaiements = await ApiService.get('/paiements/eleve/$targetEleveId');
       if (dataPaiements is List && mounted) {
@@ -113,8 +116,8 @@ class _FinancesScreenState extends State<FinancesScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _statBox('Montant payé', '${_dejaPaye.toInt()} FCFA', AppTheme.flagGreen),
-                        _statBox('Reste à payer', '${resteAPayer.toInt()} FCFA', AppTheme.danger),
+                        _statBox('Montant payé', '${_dejaPaye.toInt()} $_devise', AppTheme.flagGreen),
+                        _statBox('Reste à payer', '${resteAPayer.toInt()} $_devise', AppTheme.danger),
                       ],
                     ),
                   ],
@@ -150,7 +153,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
               ] else ...[
                 ..._paiements.map((p) {
                   final recuStr = (p['numeroRecu'] ?? 'RECU-2026').toString();
-                  final montantStr = '${(p['montantPaye'] ?? p['montant'] ?? 0).toInt()} FCFA';
+                  final montantStr = '${(p['montantPaye'] ?? p['montant'] ?? 0).toInt()} $_devise';
                   final dateStr = (p['datePaiement'] ?? 'Aujourd\'hui').toString();
                   final modeStr = (p['modePaiement'] ?? 'MOBILE_MONEY').toString();
 
@@ -226,7 +229,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
             children: [
               Text('Paiement Mobile Money', style: AppTheme.display(fontSize: 18, color: AppTheme.indigo)),
               const SizedBox(height: 6),
-              Text('Reste à régler : ${reste.toInt()} FCFA', style: AppTheme.body(fontSize: 13, color: AppTheme.laterite)),
+              Text('Reste à régler : ${reste.toInt()} $_devise', style: AppTheme.body(fontSize: 13, color: AppTheme.laterite)),
               const SizedBox(height: 20),
 
               _operatorTile('Orange Money', Colors.orange, reste),
