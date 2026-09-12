@@ -12,6 +12,7 @@ import 'finances_screen.dart';
 import 'presences_screen.dart';
 import 'emploi_du_temps_eleve_screen.dart';
 import 'notifications_screen.dart';
+import 'rapport_journalier_screen.dart';
 
 class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
@@ -135,6 +136,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
       childData = _enfants[_selectedEnfantIndex];
     }
 
+    final childId = childData?['id'];
     final childProfil = childData?['profil'];
     final childPrenom = childProfil?['prenom'] ?? (childData != null ? 'Élève' : 'Aucun enfant');
     final childNom = childProfil?['nom'] ?? '';
@@ -408,6 +410,15 @@ class _ParentDashboardState extends State<ParentDashboard> {
                       ),
                     );
                   }),
+                  if (_userData?['aClassesCreche'] == true)
+                    _gridCard('Rapport du jour', 'Repas, sieste, couches, humeur', Icons.child_care_rounded, AppTheme.flagGreen, () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RapportJournalierScreen(eleveId: childId, eleveNom: '$childPrenom $childNom'),
+                        ),
+                      );
+                    }),
                 ],
               ),
             ],
