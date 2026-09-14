@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/avatar_photo.dart';
 import '../../core/router/app_router.dart';
 import '../../core/widgets/double_back_to_exit.dart';
+import '../../core/widgets/statut_eleve_badge.dart';
 import '../auth/change_password_dialog.dart';
 import 'carte_scolaire_screen.dart';
 import 'bulletins_screen.dart';
@@ -117,6 +118,8 @@ class _EleveDashboardState extends State<EleveDashboard> {
         _eleveProfilData?['classeNom'] ?? _userData?['classeNom'] ?? 'Lycée';
     final matricule =
         _eleveProfilData?['matricule'] ?? _userData?['matricule'] ?? 'LYC-2026';
+    final statutEleve = (_eleveProfilData?['statut'] ?? 'ACTIF').toString();
+    final statutInscription = (_eleveProfilData?['statutInscription'] ?? 'VALIDEE').toString();
     final photoUrl = _eleveProfilData?['profil']?['photoUrl'];
 
     final classeIdVal =
@@ -258,23 +261,31 @@ class _EleveDashboardState extends State<EleveDashboard> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.mil.withValues(alpha: 0.16),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              classeNom,
-                              style: AppTheme.body(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.laterite,
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.mil.withValues(alpha: 0.16),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  classeNom,
+                                  style: AppTheme.body(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.laterite,
+                                  ),
+                                ),
                               ),
-                            ),
+                              StatutEleveBadge(statut: statutEleve, statutInscription: statutInscription),
+                            ],
                           ),
                         ],
                       ),

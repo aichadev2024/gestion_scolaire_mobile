@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/avatar_photo.dart';
 import '../../core/router/app_router.dart';
 import '../../core/widgets/double_back_to_exit.dart';
+import '../../core/widgets/statut_eleve_badge.dart';
 import '../auth/change_password_dialog.dart';
 import 'carte_scolaire_screen.dart';
 import 'bulletins_screen.dart';
@@ -169,6 +170,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
     final childMatricule = childData?['matricule'] ?? '—';
     final childClasse = childData?['classeNom'] ?? 'Non affecté';
     final childPhoto = childProfil?['photoUrl'];
+    final childStatut = (childData?['statut'] ?? 'ACTIF').toString();
+    final childStatutInscription = (childData?['statutInscription'] ?? 'VALIDEE').toString();
 
     return SafeArea(
       child: RefreshIndicator(
@@ -448,23 +451,31 @@ class _ParentDashboardState extends State<ParentDashboard> {
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.mil.withValues(alpha: 0.16),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  childClasse,
-                                  style: AppTheme.body(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.laterite,
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.mil.withValues(alpha: 0.16),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      childClasse,
+                                      style: AppTheme.body(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.laterite,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  StatutEleveBadge(statut: childStatut, statutInscription: childStatutInscription),
+                                ],
                               ),
                             ],
                           ),
