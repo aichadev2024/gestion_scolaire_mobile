@@ -196,17 +196,20 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final periodeOptions = (_categorie == 'PRIMAIRE' || _categorie == 'MATERNELLE')
-        ? const [
-            DropdownMenuItem(value: 'COMPOSITION_1', child: Text('Composition 1', overflow: TextOverflow.ellipsis)),
-            DropdownMenuItem(value: 'COMPOSITION_2', child: Text('Composition 2', overflow: TextOverflow.ellipsis)),
-            DropdownMenuItem(value: 'COMPOSITION_3', child: Text('Composition 3', overflow: TextOverflow.ellipsis)),
-          ]
-        : const [
-            DropdownMenuItem(value: 'TRIMESTRE_1', child: Text('Trimestre 1', overflow: TextOverflow.ellipsis)),
-            DropdownMenuItem(value: 'TRIMESTRE_2', child: Text('Trimestre 2', overflow: TextOverflow.ellipsis)),
-            DropdownMenuItem(value: 'TRIMESTRE_3', child: Text('Trimestre 3', overflow: TextOverflow.ellipsis)),
-          ];
+    // Même règle que la page Notes de l'admin web : au Mali le primaire (et pas
+    // seulement le collège/lycée) peut fonctionner à la fois par composition ET par
+    // trimestre (ex. la 6ème année/CM2) — les deux groupes ne sont pas exclusifs.
+    // Jusqu'à 8 compositions : certaines classes en comptent plus que les 3 habituelles.
+    final showCompositions = ['PRIMAIRE', 'MATERNELLE', 'COLLEGE', 'ALL'].contains(_categorie);
+    final showTrimestres = ['LYCEE', 'COLLEGE', 'PRIMAIRE', 'ALL'].contains(_categorie);
+    final periodeOptions = <DropdownMenuItem<String>>[
+      if (showCompositions)
+        for (var n = 1; n <= 8; n++)
+          DropdownMenuItem(value: 'COMPOSITION_$n', child: Text('Composition $n', overflow: TextOverflow.ellipsis)),
+      if (showTrimestres)
+        for (var n = 1; n <= 3; n++)
+          DropdownMenuItem(value: 'TRIMESTRE_$n', child: Text('Trimestre $n', overflow: TextOverflow.ellipsis)),
+    ];
     final canSubmit = _classeMatiereId != null && !_isSubmitting;
 
     return Scaffold(
