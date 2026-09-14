@@ -22,31 +22,39 @@ class ApiService {
     return headers;
   }
 
+  /// Le backend (Render, offre gratuite) se met en veille après inactivité et peut
+  /// prendre 30 à 50s à se réveiller sur la toute première requête — un timeout de 10s
+  /// déclenchait alors une fausse alerte "pas de connexion" alors que le téléphone était
+  /// bien connecté. On laisse large et on retente une fois avant d'abandonner.
+  static const Duration _timeout = Duration(seconds: 30);
+
   static Future<dynamic> get(String endpoint) => _appel(
-        () async => http.get(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders()).timeout(const Duration(seconds: 10)),
+        () async => http.get(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders()).timeout(_timeout),
       );
 
   static Future<dynamic> post(String endpoint, Map<String, dynamic> body) => _appel(
         () async => http
             .post(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders(), body: jsonEncode(body))
-            .timeout(const Duration(seconds: 10)),
+            .timeout(_timeout),
       );
 
   static Future<dynamic> put(String endpoint, Map<String, dynamic> body) => _appel(
         () async => http
             .put(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders(), body: jsonEncode(body))
-            .timeout(const Duration(seconds: 10)),
+            .timeout(_timeout),
       );
 
   static Future<dynamic> patch(String endpoint, [Map<String, dynamic>? body]) => _appel(
         () async => http
             .patch(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders(), body: body != null ? jsonEncode(body) : null)
-            .timeout(const Duration(seconds: 10)),
+            .timeout(_timeout),
       );
 
   /// Exécute la requête et transforme toute erreur réseau/serveur bas niveau
   /// en message compréhensible — un parent ou une monitrice ne doit jamais
-  /// voir "SocketException" ou "FormatException" s'afficher à l'écran.
+  /// voir "SocketException" ou "FormatException" s'afficher à l'écran. Une seule
+  /// retentative silencieuse avant d'abandonner : beaucoup d'échecs réseau sur
+  /// mobile (bascule Wi-Fi/données, DNS lent) sont transitoires.
   static Future<dynamic> _appel(Future<http.Response> Function() requete) async {
     try {
       final response = await requete();
@@ -54,7 +62,19 @@ class ApiService {
     } on TimeoutException {
       throw Exception('Le serveur met trop de temps à répondre. Réessayez dans un instant.');
     } on SocketException {
-      throw Exception('Pas de connexion internet. Vérifiez votre réseau Wi-Fi ou vos données mobiles.');
+      try {
+        final response = await requete();
+        return _handleResponse(response);
+      } on TimeoutException {
+        throw Exception('Le serveur met trop de temps à répondre. Réessayez dans un instant.');
+      } on SocketException {
+        throw Exception(
+            "Impossible de joindre le serveur. Vérifiez votre connexion Wi-Fi ou vos données mobiles, ou réessayez dans un instant.");
+      } on HttpException {
+        throw Exception('Impossible de joindre le serveur. Réessayez dans un instant.');
+      } on FormatException {
+        throw Exception('Réponse du serveur illisible. Réessayez, et contactez le support si ça persiste.');
+      }
     } on HttpException {
       throw Exception('Impossible de joindre le serveur. Réessayez dans un instant.');
     } on FormatException {
