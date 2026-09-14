@@ -22,9 +22,11 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
   bool _isSubmitting = false;
   bool _isLoading = true;
 
-  // Résolution de la matière du cours : jamais de valeur par défaut arbitraire —
-  // une présence enregistrée sous la mauvaise classeMatiereId se retrouve attachée
-  // au mauvais cours.
+  // Résolution de la matière du cours — best-effort seulement : contrairement à la
+  // saisie de notes, une présence n'a pas besoin d'être liée à une matière précise
+  // (un professeur principal peut faire un appel général de la journée). On propose
+  // la matière assignée quand elle est connue, sans jamais bloquer l'appel si aucune
+  // n'est trouvée.
   bool _resolvingMatiere = true;
   int? _classeMatiereId;
   List<Map<String, dynamic>> _matieresDisponibles = [];
@@ -50,7 +52,7 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
     if (widget.classeId == null) {
       setState(() {
         _resolvingMatiere = false;
-        _matiereError = 'Classe inconnue — impossible de déterminer le cours concerné.';
+        _matiereError = 'Classe inconnue — impossible de déterminer les élèves concernés.';
       });
       return;
     }
@@ -64,16 +66,14 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
         if (matieres.length == 1) {
           final id = matieres[0]['id'];
           _classeMatiereId = id is int ? id : int.tryParse(id.toString());
-        } else if (matieres.isEmpty) {
-          _matiereError = "Aucune matière ne vous est assignée dans cette classe. Contactez la direction si c'est une erreur.";
         }
+        // Aucune matière trouvée : ce n'est pas une erreur, l'appel reste possible
+        // sans matière (classeMatiereId=null) — cas normal d'un professeur principal.
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _resolvingMatiere = false;
-        _matiereError = 'Impossible de déterminer le cours concerné. Réessayez.';
-      });
+      // Échec réseau : on ne bloque pas l'appel pour autant, il partira sans matière.
+      setState(() => _resolvingMatiere = false);
     }
   }
 
@@ -105,28 +105,26 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
   }
 
   Future<void> _submitPresences() async {
-    if (_classeMatiereId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sélectionnez la matière avant de transmettre les présences.')),
-      );
-      return;
-    }
-
     setState(() => _isSubmitting = true);
     int successCount = 0;
+    String? dernierEchec;
 
     for (var eleve in _eleves) {
       try {
         await ApiService.post('/presences', {
           'eleveId': eleve['id'],
           'classeMatiereId': _classeMatiereId,
-          'dateSeance': DateTime.now().toIso8601String().split('T')[0],
+          // Le backend attend la clé 'date' (PresenceRequest.date, @NotNull) — l'ancienne
+          // clé 'dateSeance' n'existait pas côté serveur : chaque présence était rejetée en
+          // silence (400) et l'appel n'enregistrait donc jamais rien, malgré le message de
+          // succès affiché ensuite.
+          'date': DateTime.now().toIso8601String().split('T')[0],
           'statut': eleve['statut'],
-          'remarque': eleve['statut'] == 'RETARD' ? 'Retard de 10 min' : null,
+          'notesJustification': eleve['statut'] == 'RETARD' ? 'Retard de 10 min' : null,
         });
         successCount++;
-      } catch (_) {
-        // Continue loop if single record fails
+      } catch (e) {
+        dernierEchec = e.toString().replaceFirst('Exception: ', '');
       }
     }
 
@@ -136,9 +134,11 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            successCount > 0
+            successCount == _eleves.length
                 ? '$successCount fiches de présence transmises au serveur.'
-                : 'Présences de la classe enregistrées avec succès.',
+                : successCount > 0
+                    ? '$successCount/${_eleves.length} présences enregistrées. ${dernierEchec ?? ''}'
+                    : 'Échec de l\'enregistrement. ${dernierEchec ?? 'Réessayez.'}',
           ),
         ),
       );
@@ -176,18 +176,20 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
               else if (_matieresDisponibles.length > 1)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: DropdownButtonFormField<int>(
+                  child: DropdownButtonFormField<int?>(
                     value: _classeMatiereId,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Matière du cours'),
-                    items: _matieresDisponibles.map((m) {
-                      final id = m['id'];
-                      final matiereId = id is int ? id : int.tryParse(id.toString());
-                      final nom = m['matiere']?['nom'] ?? 'Matière';
-                      return DropdownMenuItem(value: matiereId, child: Text(nom, overflow: TextOverflow.ellipsis));
-                    }).toList(),
+                    decoration: const InputDecoration(labelText: 'Matière du cours (facultatif)'),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Appel général (aucune matière)', overflow: TextOverflow.ellipsis)),
+                      ..._matieresDisponibles.map((m) {
+                        final id = m['id'];
+                        final matiereId = id is int ? id : int.tryParse(id.toString());
+                        final nom = m['matiere']?['nom'] ?? 'Matière';
+                        return DropdownMenuItem(value: matiereId, child: Text(nom, overflow: TextOverflow.ellipsis));
+                      }),
+                    ],
                     onChanged: (v) => setState(() => _classeMatiereId = v),
-                    hint: const Text('Sélectionnez une matière'),
                   ),
                 ),
               Text('Sélectionnez le statut de chaque élève pour ce cours', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
@@ -253,7 +255,7 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
               ),
 
               ElevatedButton.icon(
-                onPressed: (_classeMatiereId != null && !_isSubmitting) ? _submitPresences : null,
+                onPressed: (_matiereError == null && _eleves.isNotEmpty && !_isSubmitting) ? _submitPresences : null,
                 icon: _isSubmitting
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.paper))
                     : const Icon(Icons.check_circle_rounded),
