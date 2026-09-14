@@ -4,6 +4,7 @@ import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/avatar_photo.dart';
 import '../../core/router/app_router.dart';
+import '../../core/widgets/double_back_to_exit.dart';
 import '../auth/change_password_dialog.dart';
 import 'carte_scolaire_screen.dart';
 import 'bulletins_screen.dart';
@@ -42,7 +43,9 @@ class _EleveDashboardState extends State<EleveDashboard> {
           }
         } catch (_) {
           try {
-            final resParent = await ApiService.get('/eleves/parent/$utilisateurId');
+            final resParent = await ApiService.get(
+              '/eleves/parent/$utilisateurId',
+            );
             if (resParent is List && resParent.isNotEmpty && mounted) {
               setState(() => _eleveProfilData = resParent[0]);
             }
@@ -54,7 +57,8 @@ class _EleveDashboardState extends State<EleveDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final eleveId = _eleveProfilData?['id'] ?? _userData?['eleveId'] ?? _userData?['id'];
+    final eleveId =
+        _eleveProfilData?['id'] ?? _userData?['eleveId'] ?? _userData?['id'];
 
     final pages = [
       _buildHomeScreen(),
@@ -63,29 +67,43 @@ class _EleveDashboardState extends State<EleveDashboard> {
       PresencesScreen(eleveId: eleveId),
     ];
 
-    return Scaffold(
-      backgroundColor: AppTheme.paper,
-      body: pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          border: Border(top: BorderSide(color: AppTheme.border)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
-          backgroundColor: AppTheme.surface,
-          selectedItemColor: AppTheme.indigo,
-          unselectedItemColor: AppTheme.inkMuted,
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.school_rounded), label: 'Accueil'),
-            BottomNavigationBarItem(icon: Icon(Icons.badge_rounded), label: 'Ma carte'),
-            BottomNavigationBarItem(icon: Icon(Icons.menu_book_rounded), label: 'Bulletins'),
-            BottomNavigationBarItem(icon: Icon(Icons.event_available_rounded), label: 'Présences'),
-          ],
+    return DoubleBackToExit(
+      child: Scaffold(
+        backgroundColor: AppTheme.paper,
+        body: pages[_selectedIndex],
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: AppTheme.surface,
+            border: Border(top: BorderSide(color: AppTheme.border)),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) => setState(() => _selectedIndex = index),
+            backgroundColor: AppTheme.surface,
+            selectedItemColor: AppTheme.indigo,
+            unselectedItemColor: AppTheme.inkMuted,
+            type: BottomNavigationBarType.fixed,
+            selectedFontSize: 11,
+            unselectedFontSize: 11,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.school_rounded),
+                label: 'Accueil',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.badge_rounded),
+                label: 'Ma carte',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.menu_book_rounded),
+                label: 'Bulletins',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.event_available_rounded),
+                label: 'Présences',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -95,12 +113,17 @@ class _EleveDashboardState extends State<EleveDashboard> {
     final prenom = _userData?['prenom'] ?? 'Élève';
     final nom = _userData?['nom'] ?? '';
     final etablissement = _userData?['etablissementNom'] ?? 'Lycée Netaa École';
-    final classeNom = _eleveProfilData?['classeNom'] ?? _userData?['classeNom'] ?? 'Lycée';
-    final matricule = _eleveProfilData?['matricule'] ?? _userData?['matricule'] ?? 'LYC-2026';
+    final classeNom =
+        _eleveProfilData?['classeNom'] ?? _userData?['classeNom'] ?? 'Lycée';
+    final matricule =
+        _eleveProfilData?['matricule'] ?? _userData?['matricule'] ?? 'LYC-2026';
     final photoUrl = _eleveProfilData?['profil']?['photoUrl'];
 
-    final classeIdVal = _eleveProfilData?['classe']?['id'] ?? _eleveProfilData?['classeId'];
-    final classeIdParsed = classeIdVal is int ? classeIdVal : (classeIdVal != null ? int.tryParse(classeIdVal.toString()) : null);
+    final classeIdVal =
+        _eleveProfilData?['classe']?['id'] ?? _eleveProfilData?['classeId'];
+    final classeIdParsed = classeIdVal is int
+        ? classeIdVal
+        : (classeIdVal != null ? int.tryParse(classeIdVal.toString()) : null);
 
     return SafeArea(
       child: RefreshIndicator(
@@ -122,26 +145,41 @@ class _EleveDashboardState extends State<EleveDashboard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.mil.withValues(alpha: 0.16),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             'ESPACE ÉLÈVE',
-                            style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.laterite, letterSpacing: 1.5),
+                            style: AppTheme.mono(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.laterite,
+                              letterSpacing: 1.5,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Salut, $prenom 👋',
-                          style: AppTheme.display(fontSize: 22, color: AppTheme.indigo),
+                          style: AppTheme.display(
+                            fontSize: 22,
+                            color: AppTheme.indigo,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           '$etablissement • $classeNom',
-                          style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted, fontWeight: FontWeight.w500),
+                          style: AppTheme.body(
+                            fontSize: 12,
+                            color: AppTheme.inkMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -150,7 +188,10 @@ class _EleveDashboardState extends State<EleveDashboard> {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.key_rounded, color: AppTheme.indigo),
+                        icon: const Icon(
+                          Icons.key_rounded,
+                          color: AppTheme.indigo,
+                        ),
                         tooltip: 'Modifier le mot de passe',
                         onPressed: () {
                           showDialog(
@@ -160,7 +201,10 @@ class _EleveDashboardState extends State<EleveDashboard> {
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.logout_rounded, color: AppTheme.danger),
+                        icon: const Icon(
+                          Icons.logout_rounded,
+                          color: AppTheme.danger,
+                        ),
                         onPressed: () => appAuth.signOut(),
                       ),
                     ],
@@ -172,7 +216,9 @@ class _EleveDashboardState extends State<EleveDashboard> {
               // Bandeau élève
               Container(
                 padding: const EdgeInsets.all(18),
-                decoration: AppTheme.cardDecoration(borderColor: AppTheme.mil.withValues(alpha: 0.5)),
+                decoration: AppTheme.cardDecoration(
+                  borderColor: AppTheme.mil.withValues(alpha: 0.5),
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -196,14 +242,39 @@ class _EleveDashboardState extends State<EleveDashboard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('$prenom $nom', style: AppTheme.display(fontSize: 17, color: AppTheme.indigo)),
+                          Text(
+                            '$prenom $nom',
+                            style: AppTheme.display(
+                              fontSize: 17,
+                              color: AppTheme.indigo,
+                            ),
+                          ),
                           const SizedBox(height: 2),
-                          Text('Matricule : $matricule', style: AppTheme.mono(fontSize: 12, color: AppTheme.inkMuted)),
+                          Text(
+                            'Matricule : $matricule',
+                            style: AppTheme.mono(
+                              fontSize: 12,
+                              color: AppTheme.inkMuted,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(6)),
-                            child: Text(classeNom, style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.laterite)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.mil.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              classeNom,
+                              style: AppTheme.body(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.laterite,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -227,27 +298,50 @@ class _EleveDashboardState extends State<EleveDashboard> {
                           color: AppTheme.mil.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.qr_code_2_rounded, size: 32, color: AppTheme.mil),
+                        child: const Icon(
+                          Icons.qr_code_2_rounded,
+                          size: 32,
+                          color: AppTheme.mil,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Ma carte élève numérique', style: AppTheme.display(fontSize: 15, color: AppTheme.paper)),
+                            Text(
+                              'Ma carte élève numérique',
+                              style: AppTheme.display(
+                                fontSize: 15,
+                                color: AppTheme.paper,
+                              ),
+                            ),
                             const SizedBox(height: 2),
-                            Text('Afficher mon QR code pour le portail & la cantine', style: AppTheme.body(fontSize: 11, color: AppTheme.paper.withValues(alpha: 0.75))),
+                            Text(
+                              'Afficher mon QR code pour le portail & la cantine',
+                              style: AppTheme.body(
+                                fontSize: 11,
+                                color: AppTheme.paper.withValues(alpha: 0.75),
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.mil, size: 16),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: AppTheme.mil,
+                        size: 16,
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
 
-              Text('Mes outils & suivi', style: AppTheme.display(fontSize: 16, color: AppTheme.indigo)),
+              Text(
+                'Mes outils & suivi',
+                style: AppTheme.display(fontSize: 16, color: AppTheme.indigo),
+              ),
               const SizedBox(height: 14),
 
               GridView.count(
@@ -297,7 +391,9 @@ class _EleveDashboardState extends State<EleveDashboard> {
                     () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Vos devoirs et annonces de classe sont synchronisés.'),
+                          content: Text(
+                            'Vos devoirs et annonces de classe sont synchronisés.',
+                          ),
                         ),
                       );
                     },
@@ -311,7 +407,13 @@ class _EleveDashboardState extends State<EleveDashboard> {
     );
   }
 
-  Widget _gridCard(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+  Widget _gridCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -323,17 +425,30 @@ class _EleveDashboardState extends State<EleveDashboard> {
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Icon(icon, color: color, size: 26),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.ink)),
+                Text(
+                  title,
+                  style: AppTheme.body(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.ink,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: AppTheme.body(fontSize: 10, color: AppTheme.inkMuted)),
+                Text(
+                  subtitle,
+                  style: AppTheme.body(fontSize: 10, color: AppTheme.inkMuted),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),

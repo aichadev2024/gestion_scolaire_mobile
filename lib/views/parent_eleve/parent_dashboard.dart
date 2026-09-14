@@ -5,6 +5,7 @@ import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/avatar_photo.dart';
 import '../../core/router/app_router.dart';
+import '../../core/widgets/double_back_to_exit.dart';
 import '../auth/change_password_dialog.dart';
 import 'carte_scolaire_screen.dart';
 import 'bulletins_screen.dart';
@@ -34,7 +35,10 @@ class _ParentDashboardState extends State<ParentDashboard> {
     super.initState();
     _loadData();
     _syncEnfantsSilent();
-    _autoSyncTimer = Timer.periodic(const Duration(seconds: 5), (_) => _syncEnfantsSilent());
+    _autoSyncTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _syncEnfantsSilent(),
+    );
   }
 
   @override
@@ -54,7 +58,9 @@ class _ParentDashboardState extends State<ParentDashboard> {
             _enfants = res;
           });
         }
-        final nonLues = await ApiService.get('/notifications/destinataire/$parentUserId/non-lues');
+        final nonLues = await ApiService.get(
+          '/notifications/destinataire/$parentUserId/non-lues',
+        );
         if (nonLues is List && mounted) {
           setState(() => _notificationsNonLues = nonLues.length);
         }
@@ -97,30 +103,47 @@ class _ParentDashboardState extends State<ParentDashboard> {
       PresencesScreen(eleveId: childId),
     ];
 
-    return Scaffold(
-      backgroundColor: AppTheme.paper,
-      body: pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          border: Border(top: BorderSide(color: AppTheme.border)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
-          backgroundColor: AppTheme.surface,
-          selectedItemColor: AppTheme.indigo,
-          unselectedItemColor: AppTheme.inkMuted,
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Accueil'),
-            BottomNavigationBarItem(icon: Icon(Icons.badge_rounded), label: 'Carte ID'),
-            BottomNavigationBarItem(icon: Icon(Icons.article_rounded), label: 'Bulletins'),
-            BottomNavigationBarItem(icon: Icon(Icons.payments_rounded), label: 'Finances'),
-            BottomNavigationBarItem(icon: Icon(Icons.event_available_rounded), label: 'Présences'),
-          ],
+    return DoubleBackToExit(
+      child: Scaffold(
+        backgroundColor: AppTheme.paper,
+        body: pages[_selectedIndex],
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: AppTheme.surface,
+            border: Border(top: BorderSide(color: AppTheme.border)),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) => setState(() => _selectedIndex = index),
+            backgroundColor: AppTheme.surface,
+            selectedItemColor: AppTheme.indigo,
+            unselectedItemColor: AppTheme.inkMuted,
+            type: BottomNavigationBarType.fixed,
+            selectedFontSize: 11,
+            unselectedFontSize: 11,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_rounded),
+                label: 'Accueil',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.badge_rounded),
+                label: 'Carte ID',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.article_rounded),
+                label: 'Bulletins',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.payments_rounded),
+                label: 'Finances',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.event_available_rounded),
+                label: 'Présences',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -129,7 +152,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
   Widget _buildHomeScreen() {
     final parentPrenom = _userData?['prenom'] ?? 'Parent';
     final parentNom = _userData?['nom'] ?? '';
-    final etablissement = _userData?['etablissementNom'] ?? 'Établissement scolaire';
+    final etablissement =
+        _userData?['etablissementNom'] ?? 'Établissement scolaire';
 
     Map<String, dynamic>? childData;
     if (_enfants.isNotEmpty && _selectedEnfantIndex < _enfants.length) {
@@ -138,7 +162,9 @@ class _ParentDashboardState extends State<ParentDashboard> {
 
     final childId = childData?['id'];
     final childProfil = childData?['profil'];
-    final childPrenom = childProfil?['prenom'] ?? (childData != null ? 'Élève' : 'Aucun enfant');
+    final childPrenom =
+        childProfil?['prenom'] ??
+        (childData != null ? 'Élève' : 'Aucun enfant');
     final childNom = childProfil?['nom'] ?? '';
     final childMatricule = childData?['matricule'] ?? '—';
     final childClasse = childData?['classeNom'] ?? 'Non affecté';
@@ -165,18 +191,30 @@ class _ParentDashboardState extends State<ParentDashboard> {
                       children: [
                         Text(
                           'ESPACE PARENT',
-                          style: AppTheme.mono(fontSize: 10, color: AppTheme.laterite, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                          style: AppTheme.mono(
+                            fontSize: 10,
+                            color: AppTheme.laterite,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           'Bonjour, $parentPrenom $parentNom 👋',
-                          style: AppTheme.display(fontSize: 20, color: AppTheme.indigo),
+                          style: AppTheme.display(
+                            fontSize: 20,
+                            color: AppTheme.indigo,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           etablissement,
-                          style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted, fontWeight: FontWeight.w500),
+                          style: AppTheme.body(
+                            fontSize: 11,
+                            color: AppTheme.inkMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -188,12 +226,17 @@ class _ParentDashboardState extends State<ParentDashboard> {
                         clipBehavior: Clip.none,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.notifications_rounded, color: AppTheme.indigo),
+                            icon: const Icon(
+                              Icons.notifications_rounded,
+                              color: AppTheme.indigo,
+                            ),
                             tooltip: 'Notifications',
                             onPressed: () async {
                               await Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const NotificationsScreen(),
+                                ),
                               );
                               _syncEnfantsSilent();
                             },
@@ -203,20 +246,38 @@ class _ParentDashboardState extends State<ParentDashboard> {
                               top: 6,
                               right: 6,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                decoration: const BoxDecoration(color: AppTheme.laterite, shape: BoxShape.circle),
-                                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 1,
+                                ),
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.laterite,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
                                 child: Text(
-                                  _notificationsNonLues > 9 ? '9+' : '$_notificationsNonLues',
+                                  _notificationsNonLues > 9
+                                      ? '9+'
+                                      : '$_notificationsNonLues',
                                   textAlign: TextAlign.center,
-                                  style: AppTheme.body(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.paper),
+                                  style: AppTheme.body(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.paper,
+                                  ),
                                 ),
                               ),
                             ),
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.key_rounded, color: AppTheme.indigo),
+                        icon: const Icon(
+                          Icons.key_rounded,
+                          color: AppTheme.indigo,
+                        ),
                         tooltip: 'Modifier le mot de passe',
                         onPressed: () {
                           showDialog(
@@ -226,7 +287,10 @@ class _ParentDashboardState extends State<ParentDashboard> {
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.logout_rounded, color: AppTheme.danger),
+                        icon: const Icon(
+                          Icons.logout_rounded,
+                          color: AppTheme.danger,
+                        ),
                         onPressed: () => appAuth.signOut(),
                       ),
                     ],
@@ -238,7 +302,9 @@ class _ParentDashboardState extends State<ParentDashboard> {
               // Sélecteur d'enfant
               Container(
                 padding: const EdgeInsets.all(18),
-                decoration: AppTheme.cardDecoration(borderColor: AppTheme.mil.withValues(alpha: 0.5)),
+                decoration: AppTheme.cardDecoration(
+                  borderColor: AppTheme.mil.withValues(alpha: 0.5),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -248,17 +314,32 @@ class _ParentDashboardState extends State<ParentDashboard> {
                         Flexible(
                           child: Text(
                             'ENFANT SUIVI ACTUELLEMENT',
-                            style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.inkMuted, letterSpacing: 1),
+                            style: AppTheme.mono(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.inkMuted,
+                              letterSpacing: 1,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(6)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.mil.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                           child: Text(
                             '${_enfants.isEmpty ? 1 : _enfants.length} enfant(s)',
-                            style: AppTheme.body(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.laterite),
+                            style: AppTheme.body(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.laterite,
+                            ),
                           ),
                         ),
                       ],
@@ -274,30 +355,49 @@ class _ParentDashboardState extends State<ParentDashboard> {
                           itemBuilder: (context, index) {
                             final isSelected = index == _selectedEnfantIndex;
                             final child = _enfants[index];
-                            final prenomNom = '${child['profil']?['prenom'] ?? ''} ${child['profil']?['nom'] ?? ''}';
+                            final prenomNom =
+                                '${child['profil']?['prenom'] ?? ''} ${child['profil']?['nom'] ?? ''}';
                             final classeStr = child['classeNom'] ?? 'Classe';
 
                             return GestureDetector(
-                              onTap: () => setState(() => _selectedEnfantIndex = index),
+                              onTap: () =>
+                                  setState(() => _selectedEnfantIndex = index),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 margin: const EdgeInsets.only(right: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? AppTheme.indigo : AppTheme.surfaceMuted,
+                                  color: isSelected
+                                      ? AppTheme.indigo
+                                      : AppTheme.surfaceMuted,
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: isSelected ? AppTheme.indigo : AppTheme.border),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppTheme.indigo
+                                        : AppTheme.border,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.face_rounded, size: 16, color: isSelected ? AppTheme.paper : AppTheme.indigo),
+                                    Icon(
+                                      Icons.face_rounded,
+                                      size: 16,
+                                      color: isSelected
+                                          ? AppTheme.paper
+                                          : AppTheme.indigo,
+                                    ),
                                     const SizedBox(width: 6),
                                     Text(
                                       '$prenomNom ($classeStr)',
                                       style: AppTheme.body(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
-                                        color: isSelected ? AppTheme.paper : AppTheme.inkMuted,
+                                        color: isSelected
+                                            ? AppTheme.paper
+                                            : AppTheme.inkMuted,
                                       ),
                                     ),
                                   ],
@@ -332,14 +432,39 @@ class _ParentDashboardState extends State<ParentDashboard> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('$childPrenom $childNom', style: AppTheme.display(fontSize: 17, color: AppTheme.indigo)),
+                              Text(
+                                '$childPrenom $childNom',
+                                style: AppTheme.display(
+                                  fontSize: 17,
+                                  color: AppTheme.indigo,
+                                ),
+                              ),
                               const SizedBox(height: 2),
-                              Text('Matricule : $childMatricule', style: AppTheme.mono(fontSize: 12, color: AppTheme.inkMuted)),
+                              Text(
+                                'Matricule : $childMatricule',
+                                style: AppTheme.mono(
+                                  fontSize: 12,
+                                  color: AppTheme.inkMuted,
+                                ),
+                              ),
                               const SizedBox(height: 2),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(6)),
-                                child: Text(childClasse, style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.laterite)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.mil.withValues(alpha: 0.16),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  childClasse,
+                                  style: AppTheme.body(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.laterite,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -365,27 +490,50 @@ class _ParentDashboardState extends State<ParentDashboard> {
                           color: AppTheme.mil.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.qr_code_2_rounded, size: 32, color: AppTheme.mil),
+                        child: const Icon(
+                          Icons.qr_code_2_rounded,
+                          size: 32,
+                          color: AppTheme.mil,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Carte scolaire numérique', style: AppTheme.display(fontSize: 15, color: AppTheme.paper)),
+                            Text(
+                              'Carte scolaire numérique',
+                              style: AppTheme.display(
+                                fontSize: 15,
+                                color: AppTheme.paper,
+                              ),
+                            ),
                             const SizedBox(height: 2),
-                            Text('Badge élève & QR code d\'accès', style: AppTheme.body(fontSize: 11, color: AppTheme.paper.withValues(alpha: 0.75))),
+                            Text(
+                              'Badge élève & QR code d\'accès',
+                              style: AppTheme.body(
+                                fontSize: 11,
+                                color: AppTheme.paper.withValues(alpha: 0.75),
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.mil, size: 16),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: AppTheme.mil,
+                        size: 16,
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
 
-              Text('Suivi & services éducatifs', style: AppTheme.display(fontSize: 16, color: AppTheme.indigo)),
+              Text(
+                'Suivi & services éducatifs',
+                style: AppTheme.display(fontSize: 16, color: AppTheme.indigo),
+              ),
               const SizedBox(height: 14),
               GridView.count(
                 crossAxisCount: 2,
@@ -394,31 +542,69 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _gridCard('Bulletins & notes', 'Moyennes & relevés', Icons.article_outlined, AppTheme.indigo, () => setState(() => _selectedIndex = 2)),
-                  _gridCard('Frais scolaires', 'Paiements & reçus', Icons.payments_outlined, AppTheme.flagGreen, () => setState(() => _selectedIndex = 3)),
-                  _gridCard('Présences & retards', 'Suivi journalier', Icons.event_available_outlined, AppTheme.mil, () => setState(() => _selectedIndex = 4)),
-                  _gridCard('Emploi du temps', 'Planning des cours', Icons.calendar_today_outlined, AppTheme.laterite, () {
-                    final classeIdVal = childData?['classe']?['id'] ?? childData?['classeId'];
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EmploiDuTempsEleveScreen(
-                          eleveNom: '$childPrenom $childNom',
-                          classeNom: childClasse,
-                          classeId: classeIdVal is int ? classeIdVal : (classeIdVal != null ? int.tryParse(classeIdVal.toString()) : null),
-                        ),
-                      ),
-                    );
-                  }),
-                  if (_userData?['aClassesCreche'] == true)
-                    _gridCard('Rapport du jour', 'Repas, sieste, couches, humeur', Icons.child_care_rounded, AppTheme.flagGreen, () {
+                  _gridCard(
+                    'Bulletins & notes',
+                    'Moyennes & relevés',
+                    Icons.article_outlined,
+                    AppTheme.indigo,
+                    () => setState(() => _selectedIndex = 2),
+                  ),
+                  _gridCard(
+                    'Frais scolaires',
+                    'Paiements & reçus',
+                    Icons.payments_outlined,
+                    AppTheme.flagGreen,
+                    () => setState(() => _selectedIndex = 3),
+                  ),
+                  _gridCard(
+                    'Présences & retards',
+                    'Suivi journalier',
+                    Icons.event_available_outlined,
+                    AppTheme.mil,
+                    () => setState(() => _selectedIndex = 4),
+                  ),
+                  _gridCard(
+                    'Emploi du temps',
+                    'Planning des cours',
+                    Icons.calendar_today_outlined,
+                    AppTheme.laterite,
+                    () {
+                      final classeIdVal =
+                          childData?['classe']?['id'] ?? childData?['classeId'];
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => RapportJournalierScreen(eleveId: childId, eleveNom: '$childPrenom $childNom'),
+                          builder: (_) => EmploiDuTempsEleveScreen(
+                            eleveNom: '$childPrenom $childNom',
+                            classeNom: childClasse,
+                            classeId: classeIdVal is int
+                                ? classeIdVal
+                                : (classeIdVal != null
+                                      ? int.tryParse(classeIdVal.toString())
+                                      : null),
+                          ),
                         ),
                       );
-                    }),
+                    },
+                  ),
+                  if (_userData?['aClassesCreche'] == true)
+                    _gridCard(
+                      'Rapport du jour',
+                      'Repas, sieste, couches, humeur',
+                      Icons.child_care_rounded,
+                      AppTheme.flagGreen,
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RapportJournalierScreen(
+                              eleveId: childId,
+                              eleveNom: '$childPrenom $childNom',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ],
@@ -428,7 +614,13 @@ class _ParentDashboardState extends State<ParentDashboard> {
     );
   }
 
-  Widget _gridCard(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+  Widget _gridCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -440,17 +632,30 @@ class _ParentDashboardState extends State<ParentDashboard> {
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Icon(icon, color: color, size: 26),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.ink)),
+                Text(
+                  title,
+                  style: AppTheme.body(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.ink,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: AppTheme.body(fontSize: 10, color: AppTheme.inkMuted)),
+                Text(
+                  subtitle,
+                  style: AppTheme.body(fontSize: 10, color: AppTheme.inkMuted),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
