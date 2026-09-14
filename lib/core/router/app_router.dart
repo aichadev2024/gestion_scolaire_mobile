@@ -7,6 +7,7 @@ import '../../views/auth/login_screen.dart';
 import '../../views/parent_eleve/parent_dashboard.dart';
 import '../../views/parent_eleve/eleve_dashboard.dart';
 import '../../views/enseignant/enseignant_dashboard.dart';
+import '../../views/promoteur/promoteur_dashboard.dart';
 
 /// Source de vérité de l'état d'authentification pour le routeur.
 /// Singleton : les écrans appellent [refresh] après connexion et [signOut]
@@ -27,6 +28,8 @@ class AppAuth extends ChangeNotifier {
         return '/enseignant';
       case 'ELEVE':
         return '/eleve';
+      case 'PROMOTEUR':
+        return '/promoteur';
       default:
         return '/parent';
     }
@@ -50,7 +53,7 @@ class AppAuth extends ChangeNotifier {
 /// Instance partagée par l'app et le routeur.
 final AppAuth appAuth = AppAuth();
 
-const _authAreas = {'/parent', '/eleve', '/enseignant'};
+const _authAreas = {'/parent', '/eleve', '/enseignant', '/promoteur'};
 const _publicAreas = {'/vitrine', '/login'};
 
 final GoRouter appRouter = GoRouter(
@@ -63,6 +66,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/parent', builder: (_, __) => const ParentDashboard()),
     GoRoute(path: '/eleve', builder: (_, __) => const EleveDashboard()),
     GoRoute(path: '/enseignant', builder: (_, __) => const EnseignantDashboard()),
+    GoRoute(path: '/promoteur', builder: (_, __) => const PromoteurDashboard()),
   ],
   redirect: (context, state) {
     if (!appAuth.ready) return null; // on attend le premier refresh()
