@@ -80,6 +80,26 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
   Future<void> _fetchEleves() async {
     try {
       final endpoint = widget.classeId != null ? '/eleves/classe/${widget.classeId}' : '/eleves';
+      final today = DateTime.now().toIso8601String().split('T')[0];
+      // Statuts déjà enregistrés aujourd'hui pour cette classe : si l'appel a déjà été pris
+      // (par exemple depuis le web), on doit refléter l'état réel au lieu de tout remettre à
+      // « Présent » et risquer d'écraser un vrai absent/retard à la revalidation.
+      Map<int, String> statutsExistants = {};
+      if (widget.classeId != null) {
+        try {
+          final presences = await ApiService.get('/presences/classe/${widget.classeId}?date=$today');
+          if (presences is List) {
+            for (var p in presences) {
+              final eleveId = p['eleve']?['id'];
+              final statut = p['statut'];
+              if (eleveId is int && statut is String) statutsExistants[eleveId] = statut;
+            }
+          }
+        } catch (_) {
+          // Best-effort : si ça échoue, on repart simplement de "Présent" par défaut.
+        }
+      }
+
       final res = await ApiService.get(endpoint);
       if (res is List && res.isNotEmpty && mounted) {
         final List<Map<String, dynamic>> fetched = [];
@@ -91,7 +111,7 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
             'id': e['id'],
             'nom': '$prenom $nom'.trim().toUpperCase(),
             'matricule': e['matricule'] ?? 'MALI-2026',
-            'statut': 'PRESENT',
+            'statut': statutsExistants[e['id']] ?? 'PRESENT',
           });
         }
         setState(() {
