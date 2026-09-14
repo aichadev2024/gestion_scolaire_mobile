@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -22,12 +23,35 @@ class DocumentService {
   static const _grisLigne = PdfColor.fromInt(0xFF9AA0A6);
 
   static pw.MemoryImage? _logoCache;
+  static final Map<String, pw.MemoryImage> _etablissementLogoCache = {};
 
-  static Future<pw.MemoryImage> _logo() async {
+  static Future<pw.MemoryImage> _logoNetaa() async {
     if (_logoCache != null) return _logoCache!;
     final bytes = await rootBundle.load('assets/brand/netaa-mark.png');
     _logoCache = pw.MemoryImage(bytes.buffer.asUint8List());
     return _logoCache!;
+  }
+
+  /// Logo de l'établissement lui-même sur ses propres documents (carte scolaire) —
+  /// celui de Netaa uniquement en repli, si l'école n'en a pas importé un ou que le
+  /// téléchargement échoue (pas de réseau, URL invalide...).
+  static Future<pw.MemoryImage> _logo({String? etablissementLogoUrl}) async {
+    if (etablissementLogoUrl == null || etablissementLogoUrl.isEmpty) {
+      return _logoNetaa();
+    }
+    final cached = _etablissementLogoCache[etablissementLogoUrl];
+    if (cached != null) return cached;
+    try {
+      final res = await http.get(Uri.parse(etablissementLogoUrl)).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
+        final img = pw.MemoryImage(res.bodyBytes);
+        _etablissementLogoCache[etablissementLogoUrl] = img;
+        return img;
+      }
+    } catch (_) {
+      // Réseau indisponible, URL invalide, format non reconnu... : repli silencieux.
+    }
+    return _logoNetaa();
   }
 
   static String _periodeLabel(String p) {
@@ -421,7 +445,7 @@ class DocumentService {
                 ),
                 pw.SizedBox(width: 12),
                 pw.Container(
-                  width: 150,
+                  width: 130,
                   height: 96,
                   padding: const pw.EdgeInsets.all(10),
                   decoration: pw.BoxDecoration(
@@ -431,7 +455,7 @@ class DocumentService {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Text("LE CHEF D'ÉTABLISSEMENT",
+                      pw.Text('LE DIRECTEUR',
                           textAlign: pw.TextAlign.center,
                           style: pw.TextStyle(
                               fontSize: 9,
@@ -439,6 +463,31 @@ class DocumentService {
                               color: _indigo)),
                       pw.Spacer(),
                       pw.Text('(Signature & cachet)',
+                          style: const pw.TextStyle(
+                              fontSize: 8, color: PdfColors.grey600)),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(width: 12),
+                pw.Container(
+                  width: 120,
+                  height: 96,
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: _indigo, width: 0.8),
+                    borderRadius: pw.BorderRadius.circular(6),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Text('LE PARENT / TUTEUR',
+                          textAlign: pw.TextAlign.center,
+                          style: pw.TextStyle(
+                              fontSize: 9,
+                              fontWeight: pw.FontWeight.bold,
+                              color: _indigo)),
+                      pw.Spacer(),
+                      pw.Text('(Signature)',
                           style: const pw.TextStyle(
                               fontSize: 8, color: PdfColors.grey600)),
                     ],
@@ -501,9 +550,10 @@ class DocumentService {
     required String etablissement,
     String anneeScolaire = '2026/2027',
     String statut = 'ACTIF',
+    String? etablissementLogoUrl,
   }) async {
     final doc = pw.Document(title: 'Carte scolaire $matricule');
-    final logo = await _logo();
+    final logo = await _logo(etablissementLogoUrl: etablissementLogoUrl);
 
     // Format carte agrandi (proportions CR80 : 85.6 × 54) pour rester lisible.
     const cardW = 340.0;

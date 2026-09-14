@@ -9,15 +9,25 @@ const Map<String, String> _typeEvaluationLabels = {
   'PARTICIPATION': 'Participation',
 };
 
-/// Catégorie déduite du niveau, pour proposer les bonnes périodes (composition
-/// pour primaire/maternelle/collège, trimestre pour collège/lycée) — même logique
-/// que la page Notes de l'admin web, pour que les deux ne se contredisent jamais.
-String _categoriePourNiveau(String? niveauNom) {
+/// Catégorie déduite du niveau (jamais du nom de classe en premier : une classe
+/// de Primaire nommée « 6ème Année » ne doit pas matcher le « 6è » du Collège —
+/// même logique que la page Notes de l'admin web, pour que les deux ne se
+/// contredisent jamais). PRIMAIRE_6 = 6ème année / CM2, seule année du primaire
+/// qui fonctionne à la fois par composition ET par trimestre au Mali.
+String _categoriePourNiveau(String? niveauNom, [String? classeNom]) {
   final n = (niveauNom ?? '').toLowerCase();
-  if (RegExp(r'lyc[ée]e|term|2nde|1[eè]re').hasMatch(n)) return 'LYCEE';
-  if (RegExp(r'coll[èe]ge|6[eè]|7[eè]|8[eè]|9[eè]').hasMatch(n)) return 'COLLEGE';
-  if (RegExp(r'maternelle|petite|moyenne|grande').hasMatch(n)) return 'MATERNELLE';
-  if (RegExp(r'primaire|cp|ce1|ce2|cm1|cm2').hasMatch(n)) return 'PRIMAIRE';
+  final c = (classeNom ?? '').toLowerCase();
+  if (RegExp(r'lyc[ée]e').hasMatch(n)) return 'LYCEE';
+  if (RegExp(r'coll[èe]ge').hasMatch(n)) return 'COLLEGE';
+  if (RegExp(r'maternelle').hasMatch(n)) return 'MATERNELLE';
+  if (RegExp(r'primaire').hasMatch(n)) {
+    if (RegExp(r'6\s*[eè]me|cm\s*2').hasMatch(c)) return 'PRIMAIRE_6';
+    return 'PRIMAIRE';
+  }
+  // Niveau non reconnu (ex. libellé personnalisé) : on retombe sur le nom de la classe.
+  if (RegExp(r'lyc[ée]e|term|2nde|1[eè]re').hasMatch(c)) return 'LYCEE';
+  if (RegExp(r'coll[èe]ge|6[eè]|7[eè]|8[eè]|9[eè]').hasMatch(c)) return 'COLLEGE';
+  if (RegExp(r'primaire|cp|ce1|ce2|cm1|cm2').hasMatch(c)) return 'PRIMAIRE';
   return 'ALL';
 }
 
@@ -69,11 +79,12 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
     try {
       final classe = await ApiService.get('/classes/${widget.classeId}');
       final niveauNom = classe is Map ? classe['niveauNom'] as String? : null;
-      final cat = _categoriePourNiveau(niveauNom);
+      final classeNom = classe is Map ? classe['nom'] as String? : null;
+      final cat = _categoriePourNiveau(niveauNom, classeNom);
       if (mounted) {
         setState(() {
           _categorie = cat;
-          _periode = (cat == 'PRIMAIRE' || cat == 'MATERNELLE') ? 'COMPOSITION_1' : 'TRIMESTRE_1';
+          _periode = (cat == 'PRIMAIRE' || cat == 'PRIMAIRE_6' || cat == 'MATERNELLE') ? 'COMPOSITION_1' : 'TRIMESTRE_1';
         });
       }
     } catch (_) {
@@ -134,7 +145,7 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
             'id': e['id'],
             'nom': '$prenom $nom'.trim().toUpperCase(),
             'matricule': e['matricule'] ?? 'MALI-2026',
-            'controller': TextEditingController(text: '12'),
+            'controller': TextEditingController(),
           });
         }
         setState(() {
@@ -157,10 +168,22 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
 
     setState(() => _isSubmitting = true);
     int successCount = 0;
+    int videsCount = 0;
     String? dernierEchec;
 
     for (var eleve in _eleves) {
-      final noteVal = double.tryParse(eleve['controller'].text) ?? 10.0;
+      final texte = (eleve['controller'] as TextEditingController).text.trim();
+      if (texte.isEmpty) {
+        // Aucune valeur par défaut cachée : un champ laissé vide n'est pas noté du
+        // tout, plutôt que d'envoyer une note arbitraire que personne n'a saisie.
+        videsCount++;
+        continue;
+      }
+      final noteVal = double.tryParse(texte.replaceAll(',', '.'));
+      if (noteVal == null) {
+        videsCount++;
+        continue;
+      }
       try {
         await ApiService.post('/notes', {
           'eleveId': eleve['id'],
@@ -180,14 +203,17 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
     if (mounted) {
       setState(() => _isSubmitting = false);
       Navigator.pop(context);
+      final omis = videsCount > 0 ? ' ($videsCount élève(s) sans note laissée de côté)' : '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            successCount == _eleves.length
-                ? '$successCount notes enregistrées et publiées avec succès sur le serveur.'
-                : successCount > 0
-                    ? '$successCount/${_eleves.length} notes enregistrées. ${dernierEchec ?? ''}'
-                    : 'Échec de l\'enregistrement. ${dernierEchec ?? 'Réessayez.'}',
+            successCount == 0
+                ? (videsCount == _eleves.length
+                    ? 'Aucune note saisie — rien n\'a été enregistré.'
+                    : 'Échec de l\'enregistrement. ${dernierEchec ?? 'Réessayez.'}')
+                : successCount + videsCount == _eleves.length && dernierEchec == null
+                    ? '$successCount notes enregistrées et publiées avec succès sur le serveur.$omis'
+                    : '$successCount/${_eleves.length} notes enregistrées.$omis ${dernierEchec ?? ''}',
           ),
         ),
       );
@@ -196,12 +222,12 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Même règle que la page Notes de l'admin web : au Mali le primaire (et pas
-    // seulement le collège/lycée) peut fonctionner à la fois par composition ET par
-    // trimestre (ex. la 6ème année/CM2) — les deux groupes ne sont pas exclusifs.
+    // Même règle que la page Notes de l'admin web : le primaire ordinaire (1ère à 5ème
+    // année) ne fonctionne QUE par composition ; seule la 6ème année/CM2 (PRIMAIRE_6,
+    // dernière année avant le collège) fonctionne aussi par trimestre, comme le collège.
     // Jusqu'à 8 compositions : certaines classes en comptent plus que les 3 habituelles.
-    final showCompositions = ['PRIMAIRE', 'MATERNELLE', 'COLLEGE', 'ALL'].contains(_categorie);
-    final showTrimestres = ['LYCEE', 'COLLEGE', 'PRIMAIRE', 'ALL'].contains(_categorie);
+    final showCompositions = ['PRIMAIRE', 'PRIMAIRE_6', 'MATERNELLE', 'COLLEGE', 'ALL'].contains(_categorie);
+    final showTrimestres = ['LYCEE', 'COLLEGE', 'PRIMAIRE_6', 'ALL'].contains(_categorie);
     final periodeOptions = <DropdownMenuItem<String>>[
       if (showCompositions)
         for (var n = 1; n <= 8; n++)
@@ -337,9 +363,10 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
                                       width: 90,
                                       child: TextField(
                                         controller: eleve['controller'],
-                                        keyboardType: TextInputType.number,
+                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                         style: AppTheme.body(color: AppTheme.ink, fontWeight: FontWeight.bold, fontSize: 14),
                                         decoration: const InputDecoration(
+                                          hintText: '—',
                                           suffixText: '/20',
                                           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                         ),

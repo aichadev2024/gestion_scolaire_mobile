@@ -37,6 +37,7 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
         matricule: matricule,
         classe: classe,
         etablissement: etablissement,
+        etablissementLogoUrl: _userData?['etablissementLogoUrl'] as String?,
       );
       final fichier = 'carte_scolaire_$matricule.pdf';
       if (partager) {
