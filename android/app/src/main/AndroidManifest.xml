@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sans cette permission, un build release (APK) ne peut faire AUCUN appel réseau :
+         Android refuse la création de socket (SocketException immédiate), quel que soit
+         le Wi-Fi/la donnée mobile. Flutter l'ajoute automatiquement en debug (voir
+         src/debug/AndroidManifest.xml) ce qui masquait le problème pendant le développement. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Netaa École"
         android:name="${applicationName}"
