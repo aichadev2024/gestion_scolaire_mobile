@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/router/app_router.dart';
-import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -25,20 +24,6 @@ class _LoginScreenState extends State<LoginScreen> {
   int? _otpUserId;
   String? _errorMessage;
   String? _infoMessage;
-  String _currentIp = '172.20.14.254';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCurrentIp();
-  }
-
-  Future<void> _loadCurrentIp() async {
-    final ip = await ApiService.getCustomIp();
-    if (mounted && ip != null && ip.trim().isNotEmpty) {
-      setState(() => _currentIp = ip.trim());
-    }
-  }
 
   Future<void> _handleLogin([String? customUser, String? customPass]) async {
     final username = customUser ?? _usernameController.text.trim();
@@ -73,14 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _errorMessage = 'Identifiants invalides.');
       }
     } catch (e) {
-      if (mounted) {
-        final err = e.toString();
-        if (err.contains('SocketException') || err.contains('timed out') || err.contains('Connection refused')) {
-          setState(() => _errorMessage = 'Impossible de joindre le serveur Spring Boot. Vérifiez que votre téléphone et l\'ordinateur sont sur le même réseau Wi-Fi.');
-        } else {
-          setState(() => _errorMessage = err.replaceAll('Exception: ', ''));
-        }
-      }
+      if (mounted) setState(() => _errorMessage = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -135,59 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showIpConfigDialog() async {
-    final currentIp = await ApiService.getCustomIp() ?? _currentIp;
-    final ipController = TextEditingController(text: currentIp);
-
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Configuration IP serveur', style: AppTheme.display(fontSize: 18)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Entrez l\'adresse IP Wi-Fi de votre ordinateur pour connecter le téléphone au backend Spring Boot.',
-                style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: ipController,
-                decoration: const InputDecoration(
-                  labelText: 'Adresse IP du serveur (ex: 172.20.14.254)',
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final newIp = ipController.text.trim();
-                await ApiService.saveCustomIp(newIp);
-                if (mounted) setState(() => _currentIp = newIp);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Adresse IP enregistrée : $newIp')),
-                  );
-                }
-              },
-              child: const Text('Enregistrer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,19 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
 
           SafeArea(
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 10,
-                  right: 12,
-                  child: IconButton(
-                    icon: const Icon(Icons.settings_outlined, color: AppTheme.indigo),
-                    tooltip: 'Configurer l\'IP du serveur',
-                    onPressed: _showIpConfigDialog,
-                  ),
-                ),
-
-                Center(
+            child: Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                     child: Column(
@@ -288,39 +201,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(color: AppTheme.danger.withValues(alpha: 0.35)),
                                   ),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        _errorMessage!,
-                                        style: AppTheme.body(color: AppTheme.danger, fontSize: 13),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      InkWell(
-                                        onTap: _showIpConfigDialog,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(4.0),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              const Icon(Icons.settings_rounded, size: 16, color: AppTheme.laterite),
-                                              const SizedBox(width: 6),
-                                              Flexible(
-                                                child: Text(
-                                                  'Changer l\'IP du serveur ($_currentIp)',
-                                                  textAlign: TextAlign.center,
-                                                  style: AppTheme.body(
-                                                    color: AppTheme.laterite,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: AppTheme.body(color: AppTheme.danger, fontSize: 13),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -435,8 +319,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-              ],
-            ),
           ),
         ],
       ),

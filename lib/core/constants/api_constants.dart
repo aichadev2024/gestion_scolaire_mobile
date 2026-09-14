@@ -1,15 +1,13 @@
 class ApiConstants {
-  /// URL de base de l'API, surchargée au build via :
-  ///   flutter build web --dart-define=API_BASE_URL=https://api.netaa-ecole.com/api
-  ///   flutter build apk --dart-define=API_BASE_URL=https://api.netaa-ecole.com/api
+  /// URL de base de l'API — toujours le backend de production. L'application
+  /// ne permet plus de la reconfigurer depuis l'écran de connexion (un ancien
+  /// réglage de développement qui empêchait certains téléphones de se
+  /// connecter s'ils avaient une adresse locale enregistrée par erreur).
   ///
-  /// À défaut de `--dart-define`, on retombe sur le backend Render actuel.
-  /// (En développement, l'écran de connexion permet aussi de saisir une IP LAN,
-  ///  stockée dans SharedPreferences et prioritaire sur cette valeur — cf.
-  ///  ApiService.getBaseUrl().)
-  ///   - Émulateur Android : `http://10.0.2.2:8089/api`
-  ///   - Web / desktop      : `http://localhost:8089/api`
-  ///   - Appareil physique  : `http://<IP-LAN-du-poste>:8089/api`
+  /// Pour un build de développement pointant vers un autre serveur, utiliser
+  /// exclusivement `--dart-define` au moment du build :
+  ///   flutter build web --dart-define=API_BASE_URL=http://localhost:8089/api
+  ///   flutter build apk --dart-define=API_BASE_URL=http://10.0.2.2:8089/api
   static const String _defaultUrl =
       'https://gestion-scolaire-backend-x0hy.onrender.com/api';
 
@@ -17,9 +15,6 @@ class ApiConstants {
     'API_BASE_URL',
     defaultValue: _defaultUrl,
   );
-
-  static const String emulatorUrl = 'http://10.0.2.2:8089/api';
-  static const String localWebUrl = 'http://localhost:8089/api';
 
   static const String baseUrl = productionUrl;
   // Endpoints
