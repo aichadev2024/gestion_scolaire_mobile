@@ -174,6 +174,16 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                         classeObj?['id'] ??
                         (_classes.isNotEmpty ? _classes[0]['id'] : null);
                     final cmIdVal = cm?['id'];
+                    final resolvedClasseId = classeIdVal is int
+                        ? classeIdVal
+                        : (classeIdVal != null
+                              ? int.tryParse(classeIdVal.toString())
+                              : null);
+                    final resolvedCmId = cmIdVal is int
+                        ? cmIdVal
+                        : (cmIdVal != null
+                              ? int.tryParse(cmIdVal.toString())
+                              : null);
                     final matiereNom =
                         cm?['matiere']?['nom'] ?? 'Cours enseignant';
                     final salleStr =
@@ -226,30 +236,23 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                             children: [
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => PrisePresenceScreen(
-                                          classeId: classeIdVal is int
-                                              ? classeIdVal
-                                              : (classeIdVal != null
-                                                    ? int.tryParse(
-                                                        classeIdVal.toString(),
-                                                      )
-                                                    : null),
-                                          classeMatiereId: cmIdVal is int
-                                              ? cmIdVal
-                                              : (cmIdVal != null
-                                                    ? int.tryParse(
-                                                        cmIdVal.toString(),
-                                                      )
-                                                    : null),
-                                          classeNom: classeNom ?? 'Classe',
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                  onPressed: resolvedClasseId == null
+                                      ? null
+                                      : () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  PrisePresenceScreen(
+                                                    classeId: resolvedClasseId,
+                                                    classeMatiereId:
+                                                        resolvedCmId,
+                                                    classeNom:
+                                                        classeNom ?? 'Classe',
+                                                  ),
+                                            ),
+                                          );
+                                        },
                                   icon: const Icon(
                                     Icons.check_circle_outline_rounded,
                                     size: 18,
@@ -264,30 +267,23 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => SaisieNotesScreen(
-                                          classeId: classeIdVal is int
-                                              ? classeIdVal
-                                              : (classeIdVal != null
-                                                    ? int.tryParse(
-                                                        classeIdVal.toString(),
-                                                      )
-                                                    : null),
-                                          classeMatiereId: cmIdVal is int
-                                              ? cmIdVal
-                                              : (cmIdVal != null
-                                                    ? int.tryParse(
-                                                        cmIdVal.toString(),
-                                                      )
-                                                    : null),
-                                          classeNom: classeNom ?? 'Classe',
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                  onPressed: resolvedClasseId == null
+                                      ? null
+                                      : () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  SaisieNotesScreen(
+                                                    classeId: resolvedClasseId,
+                                                    classeMatiereId:
+                                                        resolvedCmId,
+                                                    classeNom:
+                                                        classeNom ?? 'Classe',
+                                                  ),
+                                            ),
+                                          );
+                                        },
                                   icon: const Icon(
                                     Icons.edit_note_rounded,
                                     size: 18,
