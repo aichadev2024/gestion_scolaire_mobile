@@ -38,7 +38,14 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
   Future<void> _fetchSchedule() async {
     try {
       final userData = await AuthService.getUserData();
-      final targetId = widget.enseignantId ?? userData?['enseignantId'] ?? userData?['id'] ?? 1;
+      // enseignantId (fiche métier) uniquement — jamais data['id'] (compte de connexion)
+      // ni un repli arbitraire sur 1 : les deux ids ne coïncident presque jamais, et un
+      // faux repli pointait l'emploi du temps vers un enseignant au hasard.
+      final targetId = widget.enseignantId ?? userData?['enseignantId'];
+      if (targetId == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
 
       final res = await ApiService.get('/emplois-du-temps/enseignant/$targetId');
       if (res is List && res.isNotEmpty && mounted) {

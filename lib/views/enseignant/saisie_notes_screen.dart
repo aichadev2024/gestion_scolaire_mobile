@@ -2,6 +2,25 @@ import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
 
+const Map<String, String> _typeEvaluationLabels = {
+  'DEVOIR': 'Devoir',
+  'GRAND_DEVOIR': 'Grand devoir',
+  'EXAMEN': 'Examen',
+  'PARTICIPATION': 'Participation',
+};
+
+/// Catégorie déduite du niveau, pour proposer les bonnes périodes (composition
+/// pour primaire/maternelle/collège, trimestre pour collège/lycée) — même logique
+/// que la page Notes de l'admin web, pour que les deux ne se contredisent jamais.
+String _categoriePourNiveau(String? niveauNom) {
+  final n = (niveauNom ?? '').toLowerCase();
+  if (RegExp(r'lyc[ée]e|term|2nde|1[eè]re').hasMatch(n)) return 'LYCEE';
+  if (RegExp(r'coll[èe]ge|6[eè]|7[eè]|8[eè]|9[eè]').hasMatch(n)) return 'COLLEGE';
+  if (RegExp(r'maternelle|petite|moyenne|grande').hasMatch(n)) return 'MATERNELLE';
+  if (RegExp(r'primaire|cp|ce1|ce2|cm1|cm2').hasMatch(n)) return 'PRIMAIRE';
+  return 'ALL';
+}
+
 class SaisieNotesScreen extends StatefulWidget {
   final int? classeId;
   final int? classeMatiereId;
@@ -19,17 +38,86 @@ class SaisieNotesScreen extends StatefulWidget {
 }
 
 class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
-  String _typeEval = 'Devoir N°1';
+  String _typeEval = 'DEVOIR';
   String _periode = 'TRIMESTRE_1';
+  String _categorie = 'ALL';
   bool _isSubmitting = false;
   bool _isLoading = true;
+
+  // Résolution de la matière à noter : jamais de valeur par défaut arbitraire —
+  // une note saisie sous la mauvaise classeMatiereId n'apparaît jamais là où le
+  // directeur/l'élève la cherche.
+  bool _resolvingMatiere = true;
+  int? _classeMatiereId;
+  List<Map<String, dynamic>> _matieresDisponibles = [];
+  String? _matiereError;
 
   List<Map<String, dynamic>> _eleves = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchEleves();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await Future.wait([_resolveClasseMatiere(), _resolvePeriodes(), _fetchEleves()]);
+  }
+
+  Future<void> _resolvePeriodes() async {
+    if (widget.classeId == null) return;
+    try {
+      final classe = await ApiService.get('/classes/${widget.classeId}');
+      final niveauNom = classe is Map ? classe['niveauNom'] as String? : null;
+      final cat = _categoriePourNiveau(niveauNom);
+      if (mounted) {
+        setState(() {
+          _categorie = cat;
+          _periode = (cat == 'PRIMAIRE' || cat == 'MATERNELLE') ? 'COMPOSITION_1' : 'TRIMESTRE_1';
+        });
+      }
+    } catch (_) {
+      // Reste sur le choix par défaut (trimestre) si la classe n'a pas pu être chargée.
+    }
+  }
+
+  Future<void> _resolveClasseMatiere() async {
+    if (widget.classeMatiereId != null) {
+      setState(() {
+        _classeMatiereId = widget.classeMatiereId;
+        _resolvingMatiere = false;
+      });
+      return;
+    }
+    if (widget.classeId == null) {
+      setState(() {
+        _resolvingMatiere = false;
+        _matiereError = 'Classe inconnue — impossible de déterminer la matière.';
+      });
+      return;
+    }
+    try {
+      final res = await ApiService.get('/classes-matieres/classe/${widget.classeId}');
+      final matieres = (res is List) ? res.whereType<Map<String, dynamic>>().toList() : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      setState(() {
+        _matieresDisponibles = matieres;
+        _resolvingMatiere = false;
+        if (matieres.length == 1) {
+          final id = matieres[0]['id'];
+          _classeMatiereId = id is int ? id : int.tryParse(id.toString());
+        } else if (matieres.isEmpty) {
+          _matiereError = "Aucune matière ne vous est assignée dans cette classe. Contactez la direction si c'est une erreur.";
+        }
+        // Si plusieurs matières, l'enseignant doit en choisir une explicitement (voir dropdown).
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _resolvingMatiere = false;
+        _matiereError = 'Impossible de déterminer la matière à noter. Réessayez.';
+      });
+    }
   }
 
   Future<void> _fetchEleves() async {
@@ -60,15 +148,23 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
   }
 
   Future<void> _submitNotes() async {
+    if (_classeMatiereId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sélectionnez la matière avant d\'enregistrer les notes.')),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
     int successCount = 0;
+    String? dernierEchec;
 
     for (var eleve in _eleves) {
       final noteVal = double.tryParse(eleve['controller'].text) ?? 10.0;
       try {
         await ApiService.post('/notes', {
           'eleveId': eleve['id'],
-          'classeMatiereId': widget.classeMatiereId ?? 1,
+          'classeMatiereId': _classeMatiereId,
           'periode': _periode,
           'typeEvaluation': _typeEval,
           'valeur': noteVal,
@@ -76,8 +172,8 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
           'appreciation': noteVal >= 14 ? 'Très bon travail' : 'Travail satisfaisant',
         });
         successCount++;
-      } catch (_) {
-        // Continue loop even if one record is offline
+      } catch (e) {
+        dernierEchec = e.toString().replaceFirst('Exception: ', '');
       }
     }
 
@@ -87,9 +183,11 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            successCount > 0
+            successCount == _eleves.length
                 ? '$successCount notes enregistrées et publiées avec succès sur le serveur.'
-                : 'Notes enregistrées et publiées pour la classe.',
+                : successCount > 0
+                    ? '$successCount/${_eleves.length} notes enregistrées. ${dernierEchec ?? ''}'
+                    : 'Échec de l\'enregistrement. ${dernierEchec ?? 'Réessayez.'}',
           ),
         ),
       );
@@ -98,6 +196,19 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final periodeOptions = (_categorie == 'PRIMAIRE' || _categorie == 'MATERNELLE')
+        ? const [
+            DropdownMenuItem(value: 'COMPOSITION_1', child: Text('Composition 1', overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(value: 'COMPOSITION_2', child: Text('Composition 2', overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(value: 'COMPOSITION_3', child: Text('Composition 3', overflow: TextOverflow.ellipsis)),
+          ]
+        : const [
+            DropdownMenuItem(value: 'TRIMESTRE_1', child: Text('Trimestre 1', overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(value: 'TRIMESTRE_2', child: Text('Trimestre 2', overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(value: 'TRIMESTRE_3', child: Text('Trimestre 3', overflow: TextOverflow.ellipsis)),
+          ];
+    final canSubmit = _classeMatiereId != null && !_isSubmitting;
+
     return Scaffold(
       backgroundColor: AppTheme.paper,
       appBar: AppBar(
@@ -108,6 +219,39 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              if (_resolvingMatiere)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: LinearProgressIndicator(),
+                )
+              else if (_matiereError != null)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.danger.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(_matiereError!, style: AppTheme.body(color: AppTheme.danger, fontSize: 13)),
+                )
+              else if (_matieresDisponibles.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: DropdownButtonFormField<int>(
+                    value: _classeMatiereId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Matière à noter'),
+                    items: _matieresDisponibles.map((m) {
+                      final id = m['id'];
+                      final matiereId = id is int ? id : int.tryParse(id.toString());
+                      final nom = m['matiere']?['nom'] ?? 'Matière';
+                      return DropdownMenuItem(value: matiereId, child: Text(nom, overflow: TextOverflow.ellipsis));
+                    }).toList(),
+                    onChanged: (v) => setState(() => _classeMatiereId = v),
+                    hint: const Text('Sélectionnez une matière'),
+                  ),
+                ),
               Row(
                 children: [
                   Expanded(
@@ -119,8 +263,8 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
                         labelText: 'Évaluation',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
-                      items: ['Devoir N°1', 'Devoir N°2', 'Examen Trimestriel', 'Interrogation']
-                          .map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis)))
+                      items: _typeEvaluationLabels.entries
+                          .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis)))
                           .toList(),
                       onChanged: (v) => setState(() => _typeEval = v!),
                     ),
@@ -135,11 +279,7 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
                         labelText: 'Période',
                         contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'TRIMESTRE_1', child: Text('Trimestre 1', overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(value: 'TRIMESTRE_2', child: Text('Trimestre 2', overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(value: 'TRIMESTRE_3', child: Text('Trimestre 3', overflow: TextOverflow.ellipsis)),
-                      ],
+                      items: periodeOptions,
                       onChanged: (v) => setState(() => _periode = v!),
                     ),
                   ),
@@ -210,7 +350,7 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
               ),
 
               ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _submitNotes,
+                onPressed: canSubmit ? _submitNotes : null,
                 icon: _isSubmitting
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.paper))
                     : const Icon(Icons.save_rounded),

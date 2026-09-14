@@ -34,7 +34,10 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
       final data = await AuthService.getUserData();
       if (mounted) setState(() => _userData = data);
 
-      final teacherId = data?['enseignantId'] ?? data?['id'];
+      // enseignantId (fiche métier) — jamais data['id'] (compte de connexion) : les deux
+      // ids ne coïncident presque jamais, et le confondre pointait l'emploi du temps vers
+      // le mauvais enseignant.
+      final teacherId = data?['enseignantId'];
       if (teacherId != null) {
         final schedule = await ApiService.get(
           '/emplois-du-temps/enseignant/$teacherId',
@@ -308,8 +311,7 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                 // Accès emploi du temps
                 GestureDetector(
                   onTap: () {
-                    final teacherId =
-                        _userData?['enseignantId'] ?? _userData?['id'];
+                    final teacherId = _userData?['enseignantId'];
                     Navigator.push(
                       context,
                       MaterialPageRoute(

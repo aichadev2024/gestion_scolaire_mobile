@@ -22,12 +22,59 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
   bool _isSubmitting = false;
   bool _isLoading = true;
 
+  // Résolution de la matière du cours : jamais de valeur par défaut arbitraire —
+  // une présence enregistrée sous la mauvaise classeMatiereId se retrouve attachée
+  // au mauvais cours.
+  bool _resolvingMatiere = true;
+  int? _classeMatiereId;
+  List<Map<String, dynamic>> _matieresDisponibles = [];
+  String? _matiereError;
+
   List<Map<String, dynamic>> _eleves = [];
 
   @override
   void initState() {
     super.initState();
+    _resolveClasseMatiere();
     _fetchEleves();
+  }
+
+  Future<void> _resolveClasseMatiere() async {
+    if (widget.classeMatiereId != null) {
+      setState(() {
+        _classeMatiereId = widget.classeMatiereId;
+        _resolvingMatiere = false;
+      });
+      return;
+    }
+    if (widget.classeId == null) {
+      setState(() {
+        _resolvingMatiere = false;
+        _matiereError = 'Classe inconnue — impossible de déterminer le cours concerné.';
+      });
+      return;
+    }
+    try {
+      final res = await ApiService.get('/classes-matieres/classe/${widget.classeId}');
+      final matieres = (res is List) ? res.whereType<Map<String, dynamic>>().toList() : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      setState(() {
+        _matieresDisponibles = matieres;
+        _resolvingMatiere = false;
+        if (matieres.length == 1) {
+          final id = matieres[0]['id'];
+          _classeMatiereId = id is int ? id : int.tryParse(id.toString());
+        } else if (matieres.isEmpty) {
+          _matiereError = "Aucune matière ne vous est assignée dans cette classe. Contactez la direction si c'est une erreur.";
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _resolvingMatiere = false;
+        _matiereError = 'Impossible de déterminer le cours concerné. Réessayez.';
+      });
+    }
   }
 
   Future<void> _fetchEleves() async {
@@ -58,6 +105,13 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
   }
 
   Future<void> _submitPresences() async {
+    if (_classeMatiereId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sélectionnez la matière avant de transmettre les présences.')),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
     int successCount = 0;
 
@@ -65,7 +119,7 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
       try {
         await ApiService.post('/presences', {
           'eleveId': eleve['id'],
-          'classeMatiereId': widget.classeMatiereId ?? 1,
+          'classeMatiereId': _classeMatiereId,
           'dateSeance': DateTime.now().toIso8601String().split('T')[0],
           'statut': eleve['statut'],
           'remarque': eleve['statut'] == 'RETARD' ? 'Retard de 10 min' : null,
@@ -103,6 +157,39 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              if (_resolvingMatiere)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: LinearProgressIndicator(),
+                )
+              else if (_matiereError != null)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.danger.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(_matiereError!, style: AppTheme.body(color: AppTheme.danger, fontSize: 13)),
+                )
+              else if (_matieresDisponibles.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: DropdownButtonFormField<int>(
+                    value: _classeMatiereId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Matière du cours'),
+                    items: _matieresDisponibles.map((m) {
+                      final id = m['id'];
+                      final matiereId = id is int ? id : int.tryParse(id.toString());
+                      final nom = m['matiere']?['nom'] ?? 'Matière';
+                      return DropdownMenuItem(value: matiereId, child: Text(nom, overflow: TextOverflow.ellipsis));
+                    }).toList(),
+                    onChanged: (v) => setState(() => _classeMatiereId = v),
+                    hint: const Text('Sélectionnez une matière'),
+                  ),
+                ),
               Text('Sélectionnez le statut de chaque élève pour ce cours', style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted)),
               const SizedBox(height: 16),
 
@@ -166,7 +253,7 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
               ),
 
               ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _submitPresences,
+                onPressed: (_classeMatiereId != null && !_isSubmitting) ? _submitPresences : null,
                 icon: _isSubmitting
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.paper))
                     : const Icon(Icons.check_circle_rounded),
