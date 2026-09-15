@@ -111,7 +111,10 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
             'id': e['id'],
             'nom': '$prenom $nom'.trim().toUpperCase(),
             'matricule': e['matricule'] ?? 'MALI-2026',
-            'statut': statutsExistants[e['id']] ?? 'PRESENT',
+            // null = jamais enregistré aujourd'hui, distinct d'un vrai "Présent" déjà
+            // saisi — sinon un élève oublié (ex. échec réseau lors d'un appel précédent)
+            // se retrouvait affiché comme présent sans que personne ne l'ait constaté.
+            'statut': statutsExistants[e['id']],
           });
         }
         setState(() {
@@ -139,7 +142,10 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
           // silence (400) et l'appel n'enregistrait donc jamais rien, malgré le message de
           // succès affiché ensuite.
           'date': DateTime.now().toIso8601String().split('T')[0],
-          'statut': eleve['statut'],
+          // Un élève jamais marqué (statut null) part "Présent" au moment de la
+          // validation — c'est un choix explicite de l'enseignant qui clique Valider,
+          // pas une valeur affichée par défaut avant qu'il n'ait rien fait.
+          'statut': eleve['statut'] ?? 'PRESENT',
           'notesJustification': eleve['statut'] == 'RETARD' ? 'Retard de 10 min' : null,
         });
         successCount++;
@@ -254,6 +260,10 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(eleve['matricule'], style: AppTheme.mono(fontSize: 11, color: AppTheme.inkMuted)),
+                                          if (eleve['statut'] == null) ...[
+                                            const SizedBox(height: 2),
+                                            Text('Non enregistré', style: AppTheme.body(fontSize: 10, color: AppTheme.inkMuted, fontWeight: FontWeight.w600)),
+                                          ],
                                         ],
                                       ),
                                     ),
