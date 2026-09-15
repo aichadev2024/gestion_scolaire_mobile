@@ -551,6 +551,7 @@ class DocumentService {
     String anneeScolaire = '2026/2027',
     String statut = 'ACTIF',
     String? etablissementLogoUrl,
+    String? etablissementTelephone,
   }) async {
     final doc = pw.Document(title: 'Carte scolaire $matricule');
     final logo = await _logo(etablissementLogoUrl: etablissementLogoUrl);
@@ -600,7 +601,7 @@ class DocumentService {
                                           color: _bleuClair)),
                                   pw.Text("CARTE D'IDENTITÉ SCOLAIRE",
                                       style: pw.TextStyle(
-                                          fontSize: 7,
+                                          fontSize: 8,
                                           fontWeight: pw.FontWeight.bold,
                                           color: PdfColors.white)),
                                 ],
@@ -687,6 +688,15 @@ class DocumentService {
                         ],
                       ),
                     ),
+                    if (etablissementTelephone != null && etablissementTelephone.isNotEmpty) ...[
+                      pw.SizedBox(height: 4),
+                      pw.Container(height: 0.5, color: PdfColors.white),
+                      pw.SizedBox(height: 3),
+                      pw.Text(
+                        "En cas de perte, contacter l'école : $etablissementTelephone",
+                        style: pw.TextStyle(fontSize: 6.5, color: PdfColors.white, fontWeight: pw.FontWeight.bold),
+                      ),
+                    ],
                   ],
                 ),
               ),
