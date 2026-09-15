@@ -599,8 +599,9 @@ class DocumentService {
                                           fontWeight: pw.FontWeight.bold,
                                           color: _bleuClair)),
                                   pw.Text("CARTE D'IDENTITÉ SCOLAIRE",
-                                      style: const pw.TextStyle(
-                                          fontSize: 6,
+                                      style: pw.TextStyle(
+                                          fontSize: 7,
+                                          fontWeight: pw.FontWeight.bold,
                                           color: PdfColors.white)),
                                 ],
                               ),
