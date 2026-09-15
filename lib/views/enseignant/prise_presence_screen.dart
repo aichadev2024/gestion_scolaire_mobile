@@ -22,6 +22,14 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
   bool _isSubmitting = false;
   bool _isLoading = true;
 
+  // Classe sélectionnée : modifiable depuis l'écran (dropdown) — un enseignant de lycée
+  // est souvent affecté à plusieurs classes, il ne doit pas devoir retourner au tableau
+  // de bord pour changer de classe entre deux appels.
+  int? _classeId;
+  String _classeNom = '';
+  List<Map<String, dynamic>> _classesDisponibles = [];
+  bool _loadingClasses = true;
+
   // Résolution de la matière du cours — best-effort seulement : contrairement à la
   // saisie de notes, une présence n'a pas besoin d'être liée à une matière précise
   // (un professeur principal peut faire un appel général de la journée). On propose
@@ -37,19 +45,58 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
   @override
   void initState() {
     super.initState();
-    _resolveClasseMatiere();
+    _classeId = widget.classeId;
+    _classeNom = widget.classeNom;
+    _chargerClasses();
+    _resolveClasseMatiere(classeMatiereInitial: widget.classeMatiereId);
     _fetchEleves();
   }
 
-  Future<void> _resolveClasseMatiere() async {
-    if (widget.classeMatiereId != null) {
+  /// Liste des classes de l'enseignant connecté (déjà filtrée côté serveur aux classes
+  /// où il intervient réellement) — pour le sélecteur "Classe" en haut de l'écran.
+  Future<void> _chargerClasses() async {
+    try {
+      final res = await ApiService.get('/classes');
+      if (!mounted) return;
       setState(() {
-        _classeMatiereId = widget.classeMatiereId;
+        _classesDisponibles = (res is List) ? res.whereType<Map<String, dynamic>>().toList() : [];
+        _loadingClasses = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingClasses = false);
+    }
+  }
+
+  /// Changement de classe depuis le sélecteur : tout ce qui dépendait de l'ancienne
+  /// classe (matière, élèves, statuts déjà cochés) repart de zéro.
+  Future<void> _onClasseChange(int? nouvelleClasseId) async {
+    if (nouvelleClasseId == null || nouvelleClasseId == _classeId) return;
+    final classe = _classesDisponibles.firstWhere(
+      (c) => (c['id'] is int ? c['id'] : int.tryParse(c['id'].toString())) == nouvelleClasseId,
+      orElse: () => <String, dynamic>{},
+    );
+    setState(() {
+      _classeId = nouvelleClasseId;
+      _classeNom = (classe['nom'] as String?) ?? _classeNom;
+      _classeMatiereId = null;
+      _matieresDisponibles = [];
+      _matiereError = null;
+      _resolvingMatiere = true;
+      _eleves = [];
+      _isLoading = true;
+    });
+    await Future.wait([_resolveClasseMatiere(), _fetchEleves()]);
+  }
+
+  Future<void> _resolveClasseMatiere({int? classeMatiereInitial}) async {
+    if (classeMatiereInitial != null) {
+      setState(() {
+        _classeMatiereId = classeMatiereInitial;
         _resolvingMatiere = false;
       });
       return;
     }
-    if (widget.classeId == null) {
+    if (_classeId == null) {
       setState(() {
         _resolvingMatiere = false;
         _matiereError = 'Classe inconnue — impossible de déterminer les élèves concernés.';
@@ -57,7 +104,7 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
       return;
     }
     try {
-      final res = await ApiService.get('/classes-matieres/classe/${widget.classeId}');
+      final res = await ApiService.get('/classes-matieres/classe/$_classeId');
       final matieres = (res is List) ? res.whereType<Map<String, dynamic>>().toList() : <Map<String, dynamic>>[];
       if (!mounted) return;
       setState(() {
@@ -79,15 +126,15 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
 
   Future<void> _fetchEleves() async {
     try {
-      final endpoint = widget.classeId != null ? '/eleves/classe/${widget.classeId}' : '/eleves';
+      final endpoint = _classeId != null ? '/eleves/classe/$_classeId' : '/eleves';
       final today = DateTime.now().toIso8601String().split('T')[0];
       // Statuts déjà enregistrés aujourd'hui pour cette classe : si l'appel a déjà été pris
       // (par exemple depuis le web), on doit refléter l'état réel au lieu de tout remettre à
       // « Présent » et risquer d'écraser un vrai absent/retard à la revalidation.
       Map<int, String> statutsExistants = {};
-      if (widget.classeId != null) {
+      if (_classeId != null) {
         try {
-          final presences = await ApiService.get('/presences/classe/${widget.classeId}?date=$today');
+          final presences = await ApiService.get('/presences/classe/$_classeId?date=$today');
           if (presences is List) {
             for (var p in presences) {
               final eleveId = p['eleve']?['id'];
@@ -176,13 +223,29 @@ class _PrisePresenceScreenState extends State<PrisePresenceScreen> {
     return Scaffold(
       backgroundColor: AppTheme.paper,
       appBar: AppBar(
-        title: Text('Faire l\'appel — ${widget.classeNom}', style: AppTheme.display(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.indigo)),
+        title: Text('Faire l\'appel — $_classeNom', style: AppTheme.display(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.indigo)),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              if (!_loadingClasses && _classesDisponibles.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: DropdownButtonFormField<int>(
+                    value: _classeId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Classe'),
+                    items: _classesDisponibles.map((c) {
+                      final id = c['id'];
+                      final classeId = id is int ? id : int.tryParse(id.toString());
+                      final nom = c['nom'] ?? 'Classe';
+                      return DropdownMenuItem(value: classeId, child: Text(nom, overflow: TextOverflow.ellipsis));
+                    }).toList(),
+                    onChanged: _onClasseChange,
+                  ),
+                ),
               if (_resolvingMatiere)
                 const Padding(
                   padding: EdgeInsets.only(bottom: 12),

@@ -54,6 +54,14 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
   bool _isSubmitting = false;
   bool _isLoading = true;
 
+  // Classe sélectionnée : modifiable depuis l'écran (dropdown) — un enseignant de lycée
+  // est souvent affecté à plusieurs classes, il ne doit pas devoir retourner au tableau
+  // de bord pour changer de classe entre deux saisies.
+  int? _classeId;
+  String _classeNom = '';
+  List<Map<String, dynamic>> _classesDisponibles = [];
+  bool _loadingClasses = true;
+
   // Résolution de la matière à noter : jamais de valeur par défaut arbitraire —
   // une note saisie sous la mauvaise classeMatiereId n'apparaît jamais là où le
   // directeur/l'élève la cherche.
@@ -67,17 +75,60 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
   @override
   void initState() {
     super.initState();
-    _init();
+    _classeId = widget.classeId;
+    _classeNom = widget.classeNom;
+    _init(classeMatiereInitial: widget.classeMatiereId);
   }
 
-  Future<void> _init() async {
+  Future<void> _init({int? classeMatiereInitial}) async {
+    await Future.wait([
+      _chargerClasses(),
+      _resolveClasseMatiere(classeMatiereInitial: classeMatiereInitial),
+      _resolvePeriodes(),
+      _fetchEleves(),
+    ]);
+  }
+
+  /// Liste des classes de l'enseignant connecté (déjà filtrée côté serveur aux classes
+  /// où il intervient réellement) — pour le sélecteur "Classe" en haut de l'écran.
+  Future<void> _chargerClasses() async {
+    try {
+      final res = await ApiService.get('/classes');
+      if (!mounted) return;
+      setState(() {
+        _classesDisponibles = (res is List) ? res.whereType<Map<String, dynamic>>().toList() : [];
+        _loadingClasses = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingClasses = false);
+    }
+  }
+
+  /// Changement de classe depuis le sélecteur : tout ce qui dépendait de l'ancienne
+  /// classe (matière, période, élèves, notes en cours de saisie) repart de zéro.
+  Future<void> _onClasseChange(int? nouvelleClasseId) async {
+    if (nouvelleClasseId == null || nouvelleClasseId == _classeId) return;
+    final classe = _classesDisponibles.firstWhere(
+      (c) => (c['id'] is int ? c['id'] : int.tryParse(c['id'].toString())) == nouvelleClasseId,
+      orElse: () => <String, dynamic>{},
+    );
+    setState(() {
+      _classeId = nouvelleClasseId;
+      _classeNom = (classe['nom'] as String?) ?? _classeNom;
+      _classeMatiereId = null;
+      _matieresDisponibles = [];
+      _matiereError = null;
+      _resolvingMatiere = true;
+      _eleves = [];
+      _isLoading = true;
+    });
     await Future.wait([_resolveClasseMatiere(), _resolvePeriodes(), _fetchEleves()]);
   }
 
   Future<void> _resolvePeriodes() async {
-    if (widget.classeId == null) return;
+    if (_classeId == null) return;
     try {
-      final classe = await ApiService.get('/classes/${widget.classeId}');
+      final classe = await ApiService.get('/classes/$_classeId');
       final niveauNom = classe is Map ? classe['niveauNom'] as String? : null;
       final classeNom = classe is Map ? classe['nom'] as String? : null;
       final cat = _categoriePourNiveau(niveauNom, classeNom);
@@ -92,15 +143,15 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
     }
   }
 
-  Future<void> _resolveClasseMatiere() async {
-    if (widget.classeMatiereId != null) {
+  Future<void> _resolveClasseMatiere({int? classeMatiereInitial}) async {
+    if (classeMatiereInitial != null) {
       setState(() {
-        _classeMatiereId = widget.classeMatiereId;
+        _classeMatiereId = classeMatiereInitial;
         _resolvingMatiere = false;
       });
       return;
     }
-    if (widget.classeId == null) {
+    if (_classeId == null) {
       setState(() {
         _resolvingMatiere = false;
         _matiereError = 'Classe inconnue — impossible de déterminer la matière.';
@@ -108,7 +159,7 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
       return;
     }
     try {
-      final res = await ApiService.get('/classes-matieres/classe/${widget.classeId}');
+      final res = await ApiService.get('/classes-matieres/classe/$_classeId');
       final matieres = (res is List) ? res.whereType<Map<String, dynamic>>().toList() : <Map<String, dynamic>>[];
       if (!mounted) return;
       setState(() {
@@ -133,7 +184,7 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
 
   Future<void> _fetchEleves() async {
     try {
-      final endpoint = widget.classeId != null ? '/eleves/classe/${widget.classeId}' : '/eleves';
+      final endpoint = _classeId != null ? '/eleves/classe/$_classeId' : '/eleves';
       final res = await ApiService.get(endpoint);
       if (res is List && res.isNotEmpty && mounted) {
         final List<Map<String, dynamic>> fetched = [];
@@ -241,13 +292,29 @@ class _SaisieNotesScreenState extends State<SaisieNotesScreen> {
     return Scaffold(
       backgroundColor: AppTheme.paper,
       appBar: AppBar(
-        title: Text('Saisie des notes — ${widget.classeNom}', style: AppTheme.display(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.indigo)),
+        title: Text('Saisie des notes — $_classeNom', style: AppTheme.display(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.indigo)),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              if (!_loadingClasses && _classesDisponibles.length > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: DropdownButtonFormField<int>(
+                    value: _classeId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Classe'),
+                    items: _classesDisponibles.map((c) {
+                      final id = c['id'];
+                      final classeId = id is int ? id : int.tryParse(id.toString());
+                      final nom = c['nom'] ?? 'Classe';
+                      return DropdownMenuItem(value: classeId, child: Text(nom, overflow: TextOverflow.ellipsis));
+                    }).toList(),
+                    onChanged: _onClasseChange,
+                  ),
+                ),
               if (_resolvingMatiere)
                 const Padding(
                   padding: EdgeInsets.only(bottom: 12),
