@@ -54,6 +54,22 @@ class DocumentService {
     return _logoNetaa();
   }
 
+  /// Récupère une image réseau (photo d'élève) pour l'intégrer au PDF — retourne null si
+  /// l'élève n'a pas de photo ou si le téléchargement échoue, pour afficher un repli visuel
+  /// (silhouette) plutôt que de faire échouer toute la génération du document.
+  static Future<pw.MemoryImage?> _fetchImage(String? url) async {
+    if (url == null || url.isEmpty) return null;
+    try {
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
+        return pw.MemoryImage(res.bodyBytes);
+      }
+    } catch (_) {
+      // Pas de réseau, URL invalide... : on affichera le repli silhouette.
+    }
+    return null;
+  }
+
   static String _periodeLabel(String p) {
     switch (p) {
       case 'TRIMESTRE_1':
@@ -552,9 +568,14 @@ class DocumentService {
     String statut = 'ACTIF',
     String? etablissementLogoUrl,
     String? etablissementTelephone,
+    String? photoUrl,
   }) async {
     final doc = pw.Document(title: 'Carte scolaire $matricule');
     final logo = await _logo(etablissementLogoUrl: etablissementLogoUrl);
+    final photo = await _fetchImage(photoUrl);
+
+    final anneeCourante = DateTime.now().year + (DateTime.now().month >= 8 ? 1 : 0);
+    final dateValidite = '31/08/$anneeCourante';
 
     // Format carte agrandi (proportions CR80 : 85.6 × 54) pour rester lisible.
     const cardW = 340.0;
@@ -629,69 +650,91 @@ class DocumentService {
                     pw.SizedBox(height: 10),
                     pw.Expanded(
                       child: pw.Row(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
                         children: [
+                          // Photo — silhouette de repli si l'élève n'en a pas ou que le
+                          // téléchargement échoue, jamais un espace vide silencieux.
+                          pw.Container(
+                            width: 54,
+                            height: 68,
+                            decoration: pw.BoxDecoration(
+                              borderRadius: pw.BorderRadius.circular(6),
+                              border: pw.Border.all(color: _bleu, width: 1.2),
+                              color: PdfColor.fromInt(0x1AFFFFFF),
+                            ),
+                            child: photo != null
+                                ? pw.ClipRRect(
+                                    horizontalRadius: 5,
+                                    verticalRadius: 5,
+                                    child: pw.Image(photo, fit: pw.BoxFit.cover, width: 54, height: 68),
+                                  )
+                                : pw.Center(
+                                    child: pw.Text(
+                                      '${prenom.isNotEmpty ? prenom[0] : ''}${nom.isNotEmpty ? nom[0] : ''}'.toUpperCase(),
+                                      style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, color: _bleuClair),
+                                    ),
+                                  ),
+                          ),
+                          pw.SizedBox(width: 10),
                           pw.Expanded(
                             child: pw.Column(
                               crossAxisAlignment: pw.CrossAxisAlignment.start,
-                              mainAxisAlignment:
-                                  pw.MainAxisAlignment.spaceBetween,
                               children: [
-                                pw.Column(
-                                  crossAxisAlignment:
-                                      pw.CrossAxisAlignment.start,
-                                  children: [
-                                    pw.Text('$prenom ${nom.toUpperCase()}',
-                                        style: pw.TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: pw.FontWeight.bold,
-                                            color: PdfColors.white)),
-                                    pw.SizedBox(height: 2),
-                                    pw.Text(classe,
-                                        style: pw.TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: pw.FontWeight.bold,
-                                            color: _bleuClair)),
-                                  ],
-                                ),
-                                pw.Column(
-                                  crossAxisAlignment:
-                                      pw.CrossAxisAlignment.start,
-                                  children: [
-                                    _carteLine('MATRICULE', matricule),
-                                    _carteLine('ANNÉE', anneeScolaire),
-                                  ],
-                                ),
+                                pw.Text('$prenom ${nom.toUpperCase()}',
+                                    style: pw.TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: pw.FontWeight.bold,
+                                        color: PdfColors.white)),
+                                pw.SizedBox(height: 2),
+                                pw.Text(classe,
+                                    style: pw.TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: pw.FontWeight.bold,
+                                        color: _bleuClair)),
+                                pw.SizedBox(height: 6),
+                                _carteLine('MATRICULE', matricule),
+                                _carteLine('VALIDE', "jusqu'au $dateValidite"),
                               ],
                             ),
                           ),
-                          pw.SizedBox(width: 10),
+                          pw.SizedBox(width: 8),
                           pw.Column(
                             children: [
                               pw.Container(
-                                padding: const pw.EdgeInsets.all(4),
+                                padding: const pw.EdgeInsets.all(3),
                                 color: PdfColors.white,
                                 child: pw.BarcodeWidget(
                                   barcode: pw.Barcode.qrCode(),
                                   data: 'NETAA-VERIFY-$matricule',
-                                  width: 74,
-                                  height: 74,
+                                  width: 56,
+                                  height: 56,
                                   drawText: false,
                                 ),
                               ),
-                              pw.SizedBox(height: 3),
-                              pw.Text('Scanner pour vérifier',
+                              pw.SizedBox(height: 2),
+                              pw.Text('Scanner pour\nvérifier',
+                                  textAlign: pw.TextAlign.center,
                                   style: const pw.TextStyle(
-                                      fontSize: 6, color: PdfColors.white)),
+                                      fontSize: 5.5, color: PdfColors.white)),
                             ],
                           ),
                         ],
                       ),
                     ),
+                    pw.SizedBox(height: 4),
+                    pw.Container(height: 0.5, color: PdfColors.white),
+                    pw.SizedBox(height: 3),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('CARTE SCOLAIRE OFFICIELLE',
+                            style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xB3FFFFFF))),
+                        pw.Text(anneeScolaire,
+                            style: pw.TextStyle(fontSize: 6.5, fontWeight: pw.FontWeight.bold, color: _bleuClair)),
+                      ],
+                    ),
                     if (etablissementTelephone != null && etablissementTelephone.isNotEmpty) ...[
-                      pw.SizedBox(height: 4),
-                      pw.Container(height: 0.5, color: PdfColors.white),
-                      pw.SizedBox(height: 3),
+                      pw.SizedBox(height: 2),
                       pw.Text(
                         "En cas de perte, contacter l'école : $etablissementTelephone",
                         style: pw.TextStyle(fontSize: 6.5, color: PdfColors.white, fontWeight: pw.FontWeight.bold),

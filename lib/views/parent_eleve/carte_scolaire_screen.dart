@@ -27,6 +27,7 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
     required String matricule,
     required String classe,
     required String etablissement,
+    String? photoUrl,
   }) async {
     if (_cardBusy) return;
     setState(() => _cardBusy = true);
@@ -39,6 +40,7 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
         etablissement: etablissement,
         etablissementLogoUrl: _userData?['etablissementLogoUrl'] as String?,
         etablissementTelephone: _userData?['etablissementTelephone'] as String?,
+        photoUrl: photoUrl,
       );
       final fichier = 'carte_scolaire_$matricule.pdf';
       if (partager) {
@@ -261,6 +263,7 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                               matricule: matricule.toString(),
                               classe: classe.toString(),
                               etablissement: etablissement.toString(),
+                              photoUrl: photoUrl?.toString(),
                             ),
                     icon: _cardBusy
                         ? const SizedBox(
@@ -285,6 +288,7 @@ class _CarteScolaireScreenState extends State<CarteScolaireScreen> {
                               matricule: matricule.toString(),
                               classe: classe.toString(),
                               etablissement: etablissement.toString(),
+                              photoUrl: photoUrl?.toString(),
                             ),
                     icon: const Icon(Icons.download_rounded),
                     label: const Text('Télécharger'),
