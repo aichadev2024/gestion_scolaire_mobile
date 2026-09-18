@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/router/app_router.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/push_notification_service.dart';
 import '../../core/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -53,6 +54,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response != null && response['token'] != null && mounted) {
         await appAuth.refresh();
+        PushNotificationService.init();
+        PushNotificationService.registerToken();
         if (mounted) context.go(appAuth.home);
       } else if (mounted) {
         setState(() => _errorMessage = 'Identifiants invalides.');
@@ -80,6 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await AuthService.verifyOtp(_otpUserId!, otp);
       if (response != null && response['token'] != null && mounted) {
         await appAuth.refresh();
+        PushNotificationService.init();
+        PushNotificationService.registerToken();
         if (mounted) context.go(appAuth.home);
       } else if (mounted) {
         setState(() => _errorMessage = 'Code OTP invalide.');
