@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/document_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -157,7 +159,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
                   final dateStr = (p['datePaiement'] ?? 'Aujourd\'hui').toString();
                   final modeStr = (p['modePaiement'] ?? 'MOBILE_MONEY').toString();
 
-                  return _receiptCard('Reçu N° $recuStr', montantStr, dateStr, modeStr);
+                  return _receiptCard('Reçu N° $recuStr', montantStr, dateStr, modeStr, numeroRecu: p['numeroRecu']?.toString());
                 }),
               ],
             ],
@@ -178,7 +180,18 @@ class _FinancesScreenState extends State<FinancesScreen> {
     );
   }
 
-  Widget _receiptCard(String title, String amount, String date, String mode) {
+  Future<void> _ouvrirRecuPdf(String numeroRecu) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(content: Text('Préparation du reçu…'), duration: Duration(seconds: 2)));
+    try {
+      final bytes = await ApiService.getBytes('/paiements/recu/$numeroRecu/pdf');
+      await DocumentService.partager(Uint8List.fromList(bytes), 'recu-$numeroRecu.pdf');
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    }
+  }
+
+  Widget _receiptCard(String title, String amount, String date, String mode, {String? numeroRecu}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -210,6 +223,12 @@ class _FinancesScreenState extends State<FinancesScreen> {
           ),
           const SizedBox(width: 10),
           Text(amount, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.flagGreen)),
+          if (numeroRecu != null)
+            IconButton(
+              tooltip: 'Télécharger le reçu',
+              icon: const Icon(Icons.download_rounded, color: AppTheme.laterite),
+              onPressed: () => _ouvrirRecuPdf(numeroRecu),
+            ),
         ],
       ),
     );

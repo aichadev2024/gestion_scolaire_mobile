@@ -32,6 +32,24 @@ class ApiService {
         () async => http.get(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders()).timeout(_timeout),
       );
 
+  /// Télécharge un fichier binaire (ex. PDF d'un reçu) avec le jeton de l'utilisateur.
+  static Future<List<int>> getBytes(String endpoint) async {
+    try {
+      final headers = await _getHeaders();
+      headers['Accept'] = '*/*';
+      final response = await http.get(Uri.parse('$baseUrl$endpoint'), headers: headers).timeout(_timeout);
+      if (response.statusCode >= 200 && response.statusCode < 300) return response.bodyBytes;
+      if (response.statusCode == 401) throw Exception('Votre session a expiré. Reconnectez-vous.');
+      if (response.statusCode == 403) throw Exception("Vous n'avez pas la permission d'ouvrir ce document.");
+      if (response.statusCode == 404) throw Exception('Document introuvable.');
+      throw Exception('Le document est momentanément indisponible. Réessayez dans un instant.');
+    } on TimeoutException {
+      throw Exception('Le serveur met trop de temps à répondre. Réessayez dans un instant.');
+    } on SocketException {
+      throw Exception('Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.');
+    }
+  }
+
   static Future<dynamic> post(String endpoint, Map<String, dynamic> body) => _appel(
         () async => http
             .post(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders(), body: jsonEncode(body))
