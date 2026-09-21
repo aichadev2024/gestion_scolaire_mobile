@@ -4,25 +4,91 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Vitrine mobile — identité « Bògòlan », alignée sur la vitrine web.
-class LandingVitrineScreen extends StatelessWidget {
+/// Vitrine mobile — identité « Bògòlan », pour les trois publics de l'application.
+class LandingVitrineScreen extends StatefulWidget {
   const LandingVitrineScreen({super.key});
 
-  static const _features = <_Feature>[
-    _Feature(Icons.description_outlined, 'Notes & bulletins',
-        'Dès que l’enseignant saisit. Moyenne pondérée, rang de classe, bulletin PDF.'),
-    _Feature(Icons.event_available_outlined, 'Présences',
-        'Présent, absent, retard — justifié ou non. Une absence, et vous êtes prévenu.'),
-    _Feature(Icons.account_balance_wallet_outlined, 'Frais & reçus',
-        'Frais par classe, par tranche. Reste à payer clair, reçu PDF à chaque versement.'),
-    _Feature(Icons.calendar_month_outlined, 'Emploi du temps',
-        'La semaine de la classe, pauses comprises. Côté enseignant : ses créneaux.'),
-    _Feature(Icons.badge_outlined, 'Carte scolaire',
-        'Carte avec QR code, vérifiable par l’établissement.'),
+  @override
+  State<LandingVitrineScreen> createState() => _LandingVitrineScreenState();
+}
+
+class _Public {
+  final String libelle;
+  final IconData icone;
+  final String photo;
+  final String titre;
+  final String texte;
+  final List<_Feature> fonctions;
+  const _Public(this.libelle, this.icone, this.photo, this.titre, this.texte, this.fonctions);
+}
+
+class _Feature {
+  final IconData icon;
+  final String title;
+  final String body;
+  const _Feature(this.icon, this.title, this.body);
+}
+
+class _LandingVitrineScreenState extends State<LandingVitrineScreen> {
+  int _index = 0;
+
+  static const _publics = <_Public>[
+    _Public(
+      'Parent',
+      Icons.family_restroom_rounded,
+      'assets/photos/parents.jpg',
+      'Suivez la scolarité de votre enfant, où que vous soyez.',
+      'Notes, absences, devoirs et paiements sur votre téléphone, en temps réel. Votre école vous ouvre l’accès.',
+      [
+        _Feature(Icons.description_outlined, 'Notes & bulletins',
+            'Dès que l’enseignant saisit. Moyenne, rang de classe, bulletin PDF.'),
+        _Feature(Icons.event_available_outlined, 'Présences',
+            'Une absence ou un retard, et vous êtes prévenu tout de suite.'),
+        _Feature(Icons.menu_book_rounded, 'Cahier de texte & devoirs',
+            'Ce qui a été enseigné, et les devoirs à faire chaque jour.'),
+        _Feature(Icons.account_balance_wallet_outlined, 'Frais & reçus',
+            'Inscription, mensualités, reste à payer, reçu PDF à chaque paiement.'),
+      ],
+    ),
+    _Public(
+      'Enseignant',
+      Icons.co_present_rounded,
+      'assets/photos/enseignants.jpg',
+      'Votre classe, dans votre poche.',
+      'Faites l’appel, saisissez vos notes et tenez votre cahier de texte, même entre deux cours.',
+      [
+        _Feature(Icons.how_to_reg_outlined, 'Appel en quelques secondes',
+            'Présent, absent, retard. Les parents sont prévenus automatiquement.'),
+        _Feature(Icons.edit_note_rounded, 'Saisie des notes',
+            'Les moyennes et les rangs se calculent seuls.'),
+        _Feature(Icons.menu_book_rounded, 'Cahier de texte',
+            'Leçon du jour et devoirs donnés, visibles par les familles.'),
+        _Feature(Icons.calendar_month_outlined, 'Emploi du temps',
+            'Vos créneaux de la semaine, classe par classe.'),
+      ],
+    ),
+    _Public(
+      'Élève',
+      Icons.school_rounded,
+      'assets/photos/eleves.jpg',
+      'Ta scolarité, toujours avec toi.',
+      'Retrouve ton emploi du temps, tes notes et tes devoirs à faire, où que tu sois.',
+      [
+        _Feature(Icons.calendar_month_outlined, 'Emploi du temps',
+            'Ta semaine de cours, pauses comprises.'),
+        _Feature(Icons.description_outlined, 'Notes & bulletins',
+            'Tes résultats et ton bulletin dès qu’ils sont prêts.'),
+        _Feature(Icons.assignment_outlined, 'Devoirs à faire',
+            'Ce que ton professeur t’a demandé, jour par jour.'),
+        _Feature(Icons.badge_outlined, 'Carte scolaire',
+            'Ta carte avec QR code, vérifiable par l’établissement.'),
+      ],
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final p = _publics[_index];
     return Scaffold(
       backgroundColor: AppTheme.paper,
       body: SafeArea(
@@ -34,7 +100,6 @@ class LandingVitrineScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Barre de marque
                     Row(
                       children: [
                         SvgPicture.asset('assets/brand/netaa-mark.svg', width: 40, height: 40),
@@ -52,9 +117,8 @@ class LandingVitrineScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 22),
 
-                    // Pastille « Fait au Mali »
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -65,7 +129,8 @@ class LandingVitrineScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 6, height: 6,
+                            width: 6,
+                            height: 6,
                             decoration: const BoxDecoration(color: AppTheme.laterite, shape: BoxShape.circle),
                           ),
                           const SizedBox(width: 6),
@@ -76,35 +141,43 @@ class LandingVitrineScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    Text(
-                      'Suivez la scolarité de votre enfant, où que vous soyez.',
-                      style: AppTheme.display(fontSize: 27, color: AppTheme.indigo, height: 1.12),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Notes, présences, bulletins, cantine et frais — sur votre téléphone, en temps réel. '
-                      'Votre école vous ouvre l’accès.',
-                      style: GoogleFonts.inter(
-                          fontSize: 14, height: 1.55, color: AppTheme.charcoal.withValues(alpha: 0.7)),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Illustration
-                    const _HeroScene(),
+                    Text('Je suis…', style: AppTheme.body(fontSize: 12, color: AppTheme.charcoal.withValues(alpha: 0.6))),
                     const SizedBox(height: 8),
-                    _mudcloth(),
-                    const SizedBox(height: 24),
+                    _selecteur(),
+                    const SizedBox(height: 18),
 
-                    Text('Ce que vous suivez',
-                        style: AppTheme.display(fontSize: 20, color: AppTheme.indigo)),
-                    const SizedBox(height: 14),
-                    ..._features.map(_featureRow),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: Column(
+                        key: ValueKey(_index),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _photo(p),
+                          const SizedBox(height: 18),
+                          Text(p.titre, style: AppTheme.display(fontSize: 25, color: AppTheme.indigo, height: 1.12)),
+                          const SizedBox(height: 10),
+                          Text(
+                            p.texte,
+                            style: GoogleFonts.inter(
+                                fontSize: 14, height: 1.55, color: AppTheme.charcoal.withValues(alpha: 0.7)),
+                          ),
+                          const SizedBox(height: 20),
+                          _mudcloth(),
+                          const SizedBox(height: 20),
+                          ...p.fonctions.map(_featureRow),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Photos : Doug Linstedt, Emmanuel Ikwuegbu, Annie Spratt, bill wegener — Unsplash',
+                      style: GoogleFonts.inter(fontSize: 9.5, color: AppTheme.charcoal.withValues(alpha: 0.4)),
+                    ),
                   ],
                 ),
               ),
             ),
 
-            // CTA bas
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
@@ -131,6 +204,88 @@ class LandingVitrineScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text('Votre école vous transmet vos identifiants.',
                       style: GoogleFonts.inter(fontSize: 11, color: AppTheme.charcoal.withValues(alpha: 0.5))),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _selecteur() {
+    return Row(
+      children: List.generate(_publics.length, (i) {
+        final actif = i == _index;
+        final p = _publics[i];
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: i == _publics.length - 1 ? 0 : 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _index = i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: actif ? AppTheme.indigo : AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: actif ? AppTheme.indigo : AppTheme.charcoal.withValues(alpha: 0.12)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(p.icone, size: 20, color: actif ? AppTheme.paper : AppTheme.indigo),
+                    const SizedBox(height: 4),
+                    Text(
+                      p.libelle,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: actif ? AppTheme.paper : AppTheme.charcoal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _photo(_Public p) {
+    return AspectRatio(
+      aspectRatio: 16 / 10,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              p.photo,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(color: AppTheme.cream),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, AppTheme.indigo.withValues(alpha: 0.55)],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 14,
+              bottom: 12,
+              child: Row(
+                children: [
+                  Icon(p.icone, color: AppTheme.paper, size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Espace ${p.libelle.toLowerCase()}',
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.paper),
+                  ),
                 ],
               ),
             ),
@@ -202,113 +357,4 @@ class LandingVitrineScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Feature {
-  final IconData icon;
-  final String title;
-  final String body;
-  const _Feature(this.icon, this.title, this.body);
-}
-
-/// Parent et enfant consultant l'application sous un acacia, au coucher du soleil.
-class _HeroScene extends StatelessWidget {
-  const _HeroScene();
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 16 / 11,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.cream,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.08)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: CustomPaint(painter: _HeroPainter()),
-      ),
-    );
-  }
-}
-
-class _HeroPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    final grid = Paint()
-      ..color = AppTheme.sand.withValues(alpha: 0.7)
-      ..strokeWidth = 1;
-    for (double y = h * 0.25; y < h; y += h * 0.25) {
-      canvas.drawLine(Offset(0, y), Offset(w, y), grid);
-    }
-    for (double x = w * 0.25; x < w; x += w * 0.25) {
-      canvas.drawLine(Offset(x, 0), Offset(x, h), grid);
-    }
-
-    // Soleil
-    canvas.drawCircle(Offset(w * 0.78, h * 0.3), w * 0.09, Paint()..color = AppTheme.mil);
-
-    // Sol latérite
-    canvas.drawRect(Rect.fromLTWH(0, h * 0.78, w, h * 0.22), Paint()..color = AppTheme.laterite);
-
-    // Acacia
-    final trunk = Paint()
-      ..color = const Color(0xFF6B4326)
-      ..strokeWidth = w * 0.025
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(w * 0.2, h * 0.78), Offset(w * 0.2, h * 0.5), trunk);
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(w * 0.2, h * 0.44), width: w * 0.34, height: h * 0.16),
-      Paint()..color = const Color(0xFF5C7A4B),
-    );
-
-    // Adulte (indigo)
-    final indigoP = Paint()..color = AppTheme.indigo;
-    canvas.drawCircle(Offset(w * 0.52, h * 0.44), w * 0.045, indigoP);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.485, h * 0.5, w * 0.08, h * 0.24), Radius.circular(w * 0.03)),
-      indigoP,
-    );
-
-    // Enfant (terre)
-    final childP = Paint()..color = const Color(0xFF7A3A2B);
-    canvas.drawCircle(Offset(w * 0.64, h * 0.55), w * 0.035, childP);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.615, h * 0.6, w * 0.06, h * 0.18), Radius.circular(w * 0.025)),
-      childP,
-    );
-
-    // Téléphone + coche
-    final phone = Rect.fromLTWH(w * 0.565, h * 0.55, w * 0.07, h * 0.15);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(phone, Radius.circular(w * 0.012)),
-      Paint()..color = AppTheme.cream,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(phone, Radius.circular(w * 0.012)),
-      Paint()
-        ..color = AppTheme.indigo
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-    final check = Path()
-      ..moveTo(w * 0.583, h * 0.62)
-      ..lineTo(w * 0.595, h * 0.635)
-      ..lineTo(w * 0.618, h * 0.605);
-    canvas.drawPath(
-      check,
-      Paint()
-        ..color = AppTheme.flagGreen
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
