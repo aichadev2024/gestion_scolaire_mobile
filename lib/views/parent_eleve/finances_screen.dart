@@ -152,6 +152,8 @@ class _FinancesScreenState extends State<FinancesScreen> {
     final reste = _num(s['reste']);
     final aucunFrais = s['aucunFraisDefini'] == true;
     final toutPaye = s['toutPaye'] == true;
+    // Seule l'inscription est enregistrée : le reste de la scolarité n'est pas encore défini par l'école.
+    final inscriptionSeule = !aucunFrais && s['scolariteDefinie'] == false;
     final pct = totalDu > 0 ? (totalPaye / totalDu).clamp(0.0, 1.0) : 0.0;
     final lignes = (s['lignes'] as List?) ?? const [];
     final paiements = (s['paiements'] as List?) ?? const [];
@@ -168,7 +170,14 @@ class _FinancesScreenState extends State<FinancesScreen> {
               children: [
                 Text('SITUATION DE L\'ANNÉE', style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.inkMuted, letterSpacing: 1)),
                 if (!aucunFrais)
-                  _pastille(toutPaye ? 'Tout est payé' : '${(pct * 100).toInt()}% payé', toutPaye ? AppTheme.flagGreen : AppTheme.laterite),
+                  _pastille(
+                    toutPaye
+                        ? 'Tout est payé'
+                        : inscriptionSeule
+                            ? (reste <= 0 ? 'Inscription payée' : 'Inscription à payer')
+                            : '${(pct * 100).toInt()}% payé',
+                    toutPaye ? AppTheme.flagGreen : AppTheme.laterite,
+                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -191,7 +200,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _statBox('Total à payer', '${_fmt(totalDu)} $_devise', AppTheme.ink),
+                  _statBox(inscriptionSeule ? 'Inscription' : 'Total à payer','${_fmt(totalDu)} $_devise', AppTheme.ink),
                   _statBox('Déjà payé', '${_fmt(totalPaye)} $_devise', AppTheme.flagGreen),
                   _statBox('Reste', '${_fmt(reste)} $_devise', reste > 0 ? AppTheme.danger : AppTheme.flagGreen),
                 ],
@@ -211,6 +220,26 @@ class _FinancesScreenState extends State<FinancesScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text('Tous les frais de l\'année sont réglés. Merci !', style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.flagGreen)),
+              ),
+            ],
+          ),
+        ),
+      ],
+      if (inscriptionSeule) ...[
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: AppTheme.mil.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(14)),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline_rounded, size: 20, color: AppTheme.laterite),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Ces montants ne concernent que l\'inscription. Les mensualités et le reste de la scolarité seront affichés ici dès que l\'école les aura enregistrés : la scolarité n\'est pas encore entièrement réglée.',
+                  style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.ink),
+                ),
               ),
             ],
           ),

@@ -43,7 +43,13 @@ class _PromoteurDashboardState extends State<PromoteurDashboard> {
 
       final comptes = await ApiService.get('/utilisateurs');
       if (comptes is List && mounted) {
-        setState(() => _personnel = comptes);
+        // Seule l'équipe de l'école : ni les parents ni les élèves, ni le promoteur lui-même.
+        final monId = _userData?['id'];
+        setState(() => _personnel = comptes
+            .where((u) =>
+                !const ['PARENT', 'ELEVE', 'SUPER_ADMIN', 'PROMOTEUR'].contains(u['role']) &&
+                u['id'] != monId)
+            .toList());
       }
     } catch (_) {
       // affichage partiel en cas d'erreur réseau
@@ -345,10 +351,21 @@ class _PromoteurDashboardState extends State<PromoteurDashboard> {
     );
   }
 
+  String _libelleRole(String role) {
+    const libelles = {
+      'DIRECTEUR': 'Directeur',
+      'SECRETAIRE': 'Secrétaire',
+      'COMPTABLE': 'Comptable',
+      'ENSEIGNANT': 'Enseignant',
+      'SURVEILLANT_GENERAL': 'Surveillant général',
+    };
+    return libelles[role] ?? role;
+  }
+
   Widget _personnelTile(dynamic u) {
     final nom = (u['profil']?['nom'] ?? '').toString();
     final prenom = (u['profil']?['prenom'] ?? '').toString();
-    final role = (u['role'] ?? '').toString();
+    final role = _libelleRole((u['role'] ?? '').toString());
     final estActif = u['estActif'] == true;
 
     return Container(
