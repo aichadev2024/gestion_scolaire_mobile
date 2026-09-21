@@ -62,6 +62,10 @@ class ApiService {
             .timeout(_timeout),
       );
 
+  static Future<dynamic> delete(String endpoint) => _appel(
+        () async => http.delete(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders()).timeout(_timeout),
+      );
+
   static Future<dynamic> patch(String endpoint, [Map<String, dynamic>? body]) => _appel(
         () async => http
             .patch(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders(), body: body != null ? jsonEncode(body) : null)

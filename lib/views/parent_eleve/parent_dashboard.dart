@@ -15,6 +15,7 @@ import 'presences_screen.dart';
 import 'emploi_du_temps_eleve_screen.dart';
 import 'notifications_screen.dart';
 import 'rapport_journalier_screen.dart';
+import 'cahier_texte_eleve_screen.dart';
 
 class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
@@ -593,6 +594,23 @@ class _ParentDashboardState extends State<ParentDashboard> {
                                 : (classeIdVal != null
                                       ? int.tryParse(classeIdVal.toString())
                                       : null),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _gridCard(
+                    'Cahier de texte',
+                    'Leçons & devoirs à faire',
+                    Icons.menu_book_rounded,
+                    AppTheme.indigo,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CahierTexteEleveScreen(
+                            eleveId: childId,
+                            eleveNom: '$childPrenom $childNom',
                           ),
                         ),
                       );

@@ -11,6 +11,7 @@ import 'carte_scolaire_screen.dart';
 import 'bulletins_screen.dart';
 import 'presences_screen.dart';
 import 'emploi_du_temps_eleve_screen.dart';
+import 'cahier_texte_eleve_screen.dart';
 
 class EleveDashboard extends StatefulWidget {
   const EleveDashboard({super.key});
@@ -395,15 +396,21 @@ class _EleveDashboardState extends State<EleveDashboard> {
                     () => setState(() => _selectedIndex = 3),
                   ),
                   _gridCard(
-                    'Devoirs & annonces',
-                    'Cahier de texte',
+                    'Cahier de texte & devoirs',
+                    'Leçons & devoirs à faire',
                     Icons.assignment_rounded,
                     AppTheme.flagGreen,
                     () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Vos devoirs et annonces de classe sont synchronisés.',
+                      final id =
+                          _eleveProfilData?['id'] ??
+                          _userData?['eleveId'] ??
+                          _userData?['id'];
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CahierTexteEleveScreen(
+                            eleveId: id is int ? id : int.tryParse('$id'),
+                            eleveNom: '$prenom $nom',
                           ),
                         ),
                       );
