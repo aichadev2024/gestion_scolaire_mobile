@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,6 +8,14 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     // Lit google-services.json (config Firebase) — doit être appliqué après les plugins ci-dessus.
     id("com.google.gms.google-services")
+}
+
+// key.properties (gitignore) n'existe qu'en local / sur la machine de build release — absent en CI
+// de dev courant, d'où le chargement conditionnel plutôt qu'un échec direct.
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -33,11 +44,23 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Clé de release réelle si key.properties est présent (poste de build release),
+            // sinon repli sur la clé debug pour ne jamais casser `flutter run --release` en dev.
+            signingConfig = if (keystorePropertiesFile.exists()) signingConfigs.getByName("release")
+                             else signingConfigs.getByName("debug")
         }
     }
 }
