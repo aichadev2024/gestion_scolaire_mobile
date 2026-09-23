@@ -120,10 +120,11 @@ class _LandingVitrineScreenState extends State<LandingVitrineScreen> {
                     const SizedBox(height: 22),
 
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
                       decoration: BoxDecoration(
                         color: AppTheme.laterite.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: AppTheme.laterite.withValues(alpha: 0.18)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -168,11 +169,6 @@ class _LandingVitrineScreenState extends State<LandingVitrineScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Photos : Doug Linstedt, Emmanuel Ikwuegbu, Annie Spratt, bill wegener — Unsplash',
-                      style: GoogleFonts.inter(fontSize: 9.5, color: AppTheme.charcoal.withValues(alpha: 0.4)),
-                    ),
                   ],
                 ),
               ),
@@ -184,24 +180,38 @@ class _LandingVitrineScreenState extends State<LandingVitrineScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.surfaceLight,
                 border: Border(top: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.10))),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(color: AppTheme.indigo.withValues(alpha: 0.10), blurRadius: 24, offset: const Offset(0, -6)),
+                ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ElevatedButton(
-                    onPressed: () => context.go('/login'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.indigo,
-                      foregroundColor: AppTheme.paper,
-                      minimumSize: const Size(double.infinity, 52),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  Container(
+                    width: double.infinity,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(color: AppTheme.indigo.withValues(alpha: 0.32), blurRadius: 18, offset: const Offset(0, 8)),
+                      ],
                     ),
-                    child: Text('Se connecter',
-                        style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700)),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => context.go('/login'),
+                        child: Center(
+                          child: Text('Se connecter',
+                              style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.paper)),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 9),
                   Text('Votre école vous transmet vos identifiants.',
                       style: GoogleFonts.inter(fontSize: 11, color: AppTheme.charcoal.withValues(alpha: 0.5))),
                 ],
@@ -225,11 +235,15 @@ class _LandingVitrineScreenState extends State<LandingVitrineScreen> {
               onTap: () => setState(() => _index = i),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 11),
                 decoration: BoxDecoration(
-                  color: actif ? AppTheme.indigo : AppTheme.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: actif ? AppTheme.indigo : AppTheme.charcoal.withValues(alpha: 0.12)),
+                  gradient: actif ? AppTheme.primaryGradient : null,
+                  color: actif ? null : AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(color: actif ? Colors.transparent : AppTheme.charcoal.withValues(alpha: 0.12)),
+                  boxShadow: actif
+                      ? [BoxShadow(color: AppTheme.indigo.withValues(alpha: 0.28), blurRadius: 14, offset: const Offset(0, 6))]
+                      : null,
                 ),
                 child: Column(
                   children: [
@@ -254,42 +268,66 @@ class _LandingVitrineScreenState extends State<LandingVitrineScreen> {
   }
 
   Widget _photo(_Public p) {
-    return AspectRatio(
-      aspectRatio: 16 / 10,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              p.photo,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: AppTheme.cream),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, AppTheme.indigo.withValues(alpha: 0.55)],
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(21),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.laterite.withValues(alpha: 0.35), AppTheme.indigo.withValues(alpha: 0.35), AppTheme.mil.withValues(alpha: 0.35)],
+        ),
+        boxShadow: [
+          BoxShadow(color: AppTheme.indigo.withValues(alpha: 0.22), blurRadius: 28, offset: const Offset(0, 14)),
+        ],
+      ),
+      child: AspectRatio(
+        aspectRatio: 16 / 10,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                p.photo,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(color: AppTheme.cream),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, AppTheme.indigo.withValues(alpha: 0.62)],
+                    stops: const [0.45, 1],
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 14,
-              bottom: 12,
-              child: Row(
-                children: [
-                  Icon(p.icone, color: AppTheme.paper, size: 18),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Espace ${p.libelle.toLowerCase()}',
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.paper),
+              Positioned(
+                left: 14,
+                bottom: 13,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(p.icone, color: AppTheme.paper, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Espace ${p.libelle.toLowerCase()}',
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.paper),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -301,19 +339,23 @@ class _LandingVitrineScreenState extends State<LandingVitrineScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.08)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.07)),
+        boxShadow: [
+          BoxShadow(color: AppTheme.indigo.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(9),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.indigo.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(11),
+              boxShadow: [BoxShadow(color: AppTheme.indigo.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 3))],
             ),
-            child: Icon(f.icon, color: AppTheme.indigo, size: 20),
+            child: Icon(f.icon, color: AppTheme.paper, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
