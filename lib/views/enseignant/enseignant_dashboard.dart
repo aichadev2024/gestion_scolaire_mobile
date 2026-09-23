@@ -10,6 +10,7 @@ import 'saisie_notes_screen.dart';
 import 'emploi_du_temps_enseignant_screen.dart';
 import 'cahier_texte_enseignant_screen.dart';
 import 'rapport_niveau_enseignant_screen.dart';
+import 'sujets_devoirs_enseignant_screen.dart';
 
 class EnseignantDashboard extends StatefulWidget {
   const EnseignantDashboard({super.key});
@@ -477,6 +478,67 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                               const SizedBox(height: 2),
                               Text(
                                 'Signalez à la direction le niveau et les élèves en difficulté',
+                                style: AppTheme.body(
+                                  fontSize: 11,
+                                  color: AppTheme.paper.withValues(alpha: 0.75),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppTheme.mil,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Accès sujets de devoirs/examens (envoi à la direction avant diffusion)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SujetsDevoirsEnseignantScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: AppTheme.heroDecoration(borderRadius: 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.mil.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.upload_file_rounded,
+                            color: AppTheme.mil,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sujets de devoirs & examens',
+                                style: AppTheme.display(
+                                  fontSize: 14,
+                                  color: AppTheme.paper,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Envoyez vos sujets à la direction avant diffusion',
                                 style: AppTheme.body(
                                   fontSize: 11,
                                   color: AppTheme.paper.withValues(alpha: 0.75),

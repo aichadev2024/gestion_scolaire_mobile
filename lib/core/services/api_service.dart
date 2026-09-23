@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../constants/api_constants.dart';
 import 'auth_service.dart';
 
@@ -65,6 +66,31 @@ class ApiService {
   static Future<dynamic> delete(String endpoint) => _appel(
         () async => http.delete(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders()).timeout(_timeout),
       );
+
+  /// Envoie un fichier (photo ou PDF) avec des champs texte — inscription, sujets de devoirs, etc.
+  static Future<dynamic> postMultipart(
+    String endpoint, {
+    required String fichierChamp,
+    required List<int> fichierBytes,
+    required String fichierNom,
+    String? fichierContentType,
+    Map<String, String> champs = const {},
+  }) =>
+      _appel(() async {
+        final headers = await _getHeaders();
+        headers.remove('Content-Type'); // fixé automatiquement par MultipartRequest (boundary inclus)
+        final request = http.MultipartRequest('POST', Uri.parse('$baseUrl$endpoint'))
+          ..headers.addAll(headers)
+          ..fields.addAll(champs)
+          ..files.add(http.MultipartFile.fromBytes(
+            fichierChamp,
+            fichierBytes,
+            filename: fichierNom,
+            contentType: fichierContentType != null ? MediaType.parse(fichierContentType) : null,
+          ));
+        final streamed = await request.send().timeout(_timeout);
+        return http.Response.fromStream(streamed);
+      });
 
   static Future<dynamic> patch(String endpoint, [Map<String, dynamic>? body]) => _appel(
         () async => http
