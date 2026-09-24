@@ -67,8 +67,10 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
             dayIdx = 5;
           }
 
-          final hDebut = item['heureDebut'] ?? '';
-          final hFin = item['heureFin'] ?? '';
+          // Le backend renvoie "HH:mm:ss" (LocalTime) — on n'affiche jamais les secondes.
+          String hhmm(String h) => h.length >= 5 ? h.substring(0, 5) : h;
+          final hDebut = hhmm((item['heureDebut'] ?? '').toString());
+          final hFin = hhmm((item['heureFin'] ?? '').toString());
           final heureStr = hDebut.isNotEmpty && hFin.isNotEmpty ? '$hDebut - $hFin' : (hDebut.isNotEmpty ? hDebut : '08:00');
           final cm = item['classeMatiere'];
           final classeObj = cm?['classe'] ?? item['classe'];
@@ -118,11 +120,18 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
           children: [
             const SizedBox(height: 16),
 
-            SizedBox(
-              height: 44,
+            // Sélecteur de jour façon « segmented control » : piste neutre, pastille active
+            // blanche avec ombre douce — moins de blocs de couleur pleins qu'un bouton par jour.
+            Container(
+              height: 48,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceMuted,
+                borderRadius: BorderRadius.circular(14),
+              ),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: _jours.length,
                 itemBuilder: (context, index) {
                   final isSelected = index == _selectedDayIndex;
@@ -130,20 +139,22 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                     onTap: () => setState(() => _selectedDayIndex = index),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.only(right: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      curve: Curves.easeOut,
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.indigo : AppTheme.surfaceMuted,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? AppTheme.indigo : AppTheme.border,
-                        ),
+                        color: isSelected ? AppTheme.surface : Colors.transparent,
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: isSelected
+                            ? [BoxShadow(color: AppTheme.charcoal.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2))]
+                            : null,
                       ),
                       child: Text(
                         _jours[index],
                         style: AppTheme.body(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? AppTheme.paper : AppTheme.inkMuted,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? AppTheme.indigo : AppTheme.inkMuted,
                           fontSize: 13,
                         ),
                       ),
@@ -169,10 +180,10 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                             final isNow = item['statut'] == 'En cours';
 
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 16),
+                              margin: const EdgeInsets.only(bottom: 14),
                               padding: const EdgeInsets.all(18),
                               decoration: AppTheme.cardDecoration(
-                                borderColor: isNow ? AppTheme.mil.withValues(alpha: 0.6) : AppTheme.border,
+                                borderColor: isNow ? AppTheme.mil.withValues(alpha: 0.5) : AppTheme.border,
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,34 +191,39 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.laterite),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            item['heure']!,
-                                            style: AppTheme.body(fontWeight: FontWeight.bold, color: AppTheme.laterite, fontSize: 14),
-                                          ),
-                                        ],
-                                      ),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                         decoration: BoxDecoration(
-                                          color: isNow ? AppTheme.flagGreen.withValues(alpha: 0.14) : AppTheme.surfaceMuted,
+                                          color: AppTheme.mil.withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
-                                        child: Text(
-                                          item['statut']!,
-                                          style: AppTheme.body(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: isNow ? AppTheme.flagGreen : AppTheme.inkMuted,
-                                          ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.access_time_rounded, size: 14, color: AppTheme.mil),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              item['heure']!,
+                                              style: AppTheme.body(fontWeight: FontWeight.w700, color: AppTheme.mil, fontSize: 13),
+                                            ),
+                                          ],
                                         ),
                                       ),
+                                      if (isNow)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.flagGreen.withValues(alpha: 0.14),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            item['statut']!,
+                                            style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.flagGreen),
+                                          ),
+                                        ),
                                     ],
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 14),
                                   Text(
                                     '${item['classe']!} • ${item['matiere']!}',
                                     style: AppTheme.display(fontSize: 17, color: AppTheme.indigo),
@@ -245,16 +261,11 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                                           },
                                           icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
                                           label: const Text('Appel'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppTheme.flagGreen,
-                                            foregroundColor: AppTheme.paper,
-                                            padding: const EdgeInsets.symmetric(vertical: 10),
-                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
-                                        child: ElevatedButton.icon(
+                                        child: OutlinedButton.icon(
                                           onPressed: () {
                                             final cId = item['classeId'];
                                             final cmId = item['classeMatiereId'];
@@ -271,11 +282,6 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                                           },
                                           icon: const Icon(Icons.edit_note_rounded, size: 16),
                                           label: const Text('Notes'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppTheme.indigo,
-                                            foregroundColor: AppTheme.paper,
-                                            padding: const EdgeInsets.symmetric(vertical: 10),
-                                          ),
                                         ),
                                       ),
                                     ],
