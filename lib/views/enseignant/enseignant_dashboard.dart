@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/router/app_router.dart';
 import '../../core/widgets/double_back_to_exit.dart';
 import '../auth/change_password_dialog.dart';
+import '../parent_eleve/notifications_screen.dart';
 import 'prise_presence_screen.dart';
 import 'saisie_notes_screen.dart';
 import 'emploi_du_temps_enseignant_screen.dart';
@@ -24,6 +25,7 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
   List<dynamic> _classes = [];
   Map<String, dynamic>? _activeCreneau;
   bool _isLoading = true;
+  int _notificationsNonLues = 0;
 
   @override
   void initState() {
@@ -36,6 +38,14 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
     try {
       final data = await AuthService.getUserData();
       if (mounted) setState(() => _userData = data);
+
+      final utilisateurId = data?['utilisateurId'] ?? data?['id'];
+      if (utilisateurId != null) {
+        try {
+          final nonLues = await ApiService.get('/notifications/destinataire/$utilisateurId/non-lues');
+          if (nonLues is List && mounted) setState(() => _notificationsNonLues = nonLues.length);
+        } catch (_) {}
+      }
 
       // enseignantId (fiche métier) — jamais data['id'] (compte de connexion) : les deux
       // ids ne coïncident presque jamais, et le confondre pointait l'emploi du temps vers
@@ -138,6 +148,40 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                     ),
                     Row(
                       children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.notifications_rounded,
+                                color: AppTheme.indigo,
+                              ),
+                              tooltip: 'Notifications',
+                              onPressed: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                                );
+                                _loadUserData();
+                              },
+                            ),
+                            if (_notificationsNonLues > 0)
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                  decoration: const BoxDecoration(color: AppTheme.laterite, shape: BoxShape.circle),
+                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                  child: Text(
+                                    _notificationsNonLues > 9 ? '9+' : '$_notificationsNonLues',
+                                    textAlign: TextAlign.center,
+                                    style: AppTheme.body(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.paper),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                         IconButton(
                           icon: const Icon(
                             Icons.key_rounded,
