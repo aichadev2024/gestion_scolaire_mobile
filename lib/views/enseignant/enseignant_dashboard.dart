@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
@@ -23,14 +24,108 @@ class EnseignantDashboard extends StatefulWidget {
 class _EnseignantDashboardState extends State<EnseignantDashboard> {
   Map<String, dynamic>? _userData;
   List<dynamic> _classes = [];
+  List<dynamic> _schedule = [];
   Map<String, dynamic>? _activeCreneau;
+  bool _creneauEnCours = false;
+  /// null = créneau en cours ; sinon nombre de jours avant le prochain (0 = plus tard aujourd'hui).
+  int? _joursAvantProchain;
   bool _isLoading = true;
   int _notificationsNonLues = 0;
+  Timer? _minuteur;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    // Recalcule quel créneau est « actif » chaque minute, sans re-solliciter l'API : le
+    // planning ne change pas seul, seule l'heure courante avance.
+    _minuteur = Timer.periodic(const Duration(minutes: 1), (_) => _resoudreCreneauActif());
+  }
+
+  @override
+  void dispose() {
+    _minuteur?.cancel();
+    super.dispose();
+  }
+
+  /// Convertit "HH:mm:ss" (ou "HH:mm") en minutes depuis minuit, pour comparer facilement.
+  int? _minutesDepuisMinuit(String? heure) {
+    if (heure == null || heure.length < 5) return null;
+    final h = int.tryParse(heure.substring(0, 2));
+    final m = int.tryParse(heure.substring(3, 5));
+    if (h == null || m == null) return null;
+    return h * 60 + m;
+  }
+
+  /// Détermine, parmi tous les créneaux COURS de la semaine, celui qui est en cours
+  /// maintenant, ou à défaut le plus proche à venir (aujourd'hui ou un jour suivant).
+  void _resoudreCreneauActif() {
+    if (_schedule.isEmpty) {
+      if (mounted) setState(() { _activeCreneau = null; _creneauEnCours = false; _joursAvantProchain = null; });
+      return;
+    }
+    final maintenant = DateTime.now();
+    final jourAujourdHui = maintenant.weekday; // 1 = Lundi ... 7 = Dimanche, même convention que le backend
+    final minutesMaintenant = maintenant.hour * 60 + maintenant.minute;
+
+    final coursSeulement = _schedule.where((c) => (c['typeCreneau'] ?? 'COURS') == 'COURS').toList();
+
+    // 1) Un cours en ce moment même, aujourd'hui ?
+    for (final c in coursSeulement) {
+      final jour = c['jourSemaine'];
+      if (jour != jourAujourdHui) continue;
+      final debut = _minutesDepuisMinuit(c['heureDebut']?.toString());
+      final fin = _minutesDepuisMinuit(c['heureFin']?.toString());
+      if (debut == null || fin == null) continue;
+      if (minutesMaintenant >= debut && minutesMaintenant < fin) {
+        if (mounted) setState(() { _activeCreneau = c; _creneauEnCours = true; _joursAvantProchain = null; });
+        return;
+      }
+    }
+
+    // 2) Sinon, le plus proche à venir — aujourd'hui plus tard, ou un jour suivant (semaine qui tourne).
+    Map<String, dynamic>? meilleur;
+    int? meilleurDecalageJours;
+    int? meilleurMinutes;
+    for (final c in coursSeulement) {
+      final jour = c['jourSemaine'];
+      final debut = _minutesDepuisMinuit(c['heureDebut']?.toString());
+      if (jour is! int || debut == null) continue;
+
+      int decalage = (jour - jourAujourdHui) % 7;
+      if (decalage < 0) decalage += 7;
+      if (decalage == 0 && debut <= minutesMaintenant) decalage = 7; // déjà passé aujourd'hui -> semaine prochaine
+
+      final meilleurActuelDecalage = meilleurDecalageJours;
+      if (meilleurActuelDecalage == null ||
+          decalage < meilleurActuelDecalage ||
+          (decalage == meilleurActuelDecalage && debut < (meilleurMinutes ?? 1 << 30))) {
+        meilleur = c;
+        meilleurDecalageJours = decalage;
+        meilleurMinutes = debut;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _activeCreneau = meilleur;
+        _creneauEnCours = false;
+        _joursAvantProchain = meilleurDecalageJours;
+      });
+    }
+  }
+
+  static const List<String> _nomsJours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+
+  /// Étiquette humaine pour le prochain créneau : "aujourd'hui", "demain", ou le jour nommé.
+  String _libelleProchain() {
+    final decalage = _joursAvantProchain;
+    if (decalage == null) return '';
+    if (decalage == 0) return "plus tard aujourd'hui";
+    if (decalage == 1) return 'demain';
+    final jour = _activeCreneau?['jourSemaine'];
+    if (jour is int && jour >= 1 && jour <= 7) return _nomsJours[jour - 1].toLowerCase();
+    return 'bientôt';
   }
 
   Future<void> _loadUserData() async {
@@ -55,10 +150,9 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
         final schedule = await ApiService.get(
           '/emplois-du-temps/enseignant/$teacherId',
         );
-        if (schedule is List && schedule.isNotEmpty && mounted) {
-          setState(() {
-            _activeCreneau = schedule[0];
-          });
+        if (schedule is List && mounted) {
+          setState(() => _schedule = schedule);
+          _resoudreCreneauActif();
         }
         final classesRes = await ApiService.get('/classes');
         if (classesRes is List && classesRes.isNotEmpty && mounted) {
@@ -208,75 +302,76 @@ class _EnseignantDashboardState extends State<EnseignantDashboard> {
                 ),
                 const SizedBox(height: 24),
 
-                // Carte du cours actif
+                // Carte du cours actif — reflète l'heure réelle : le cours en cours maintenant
+                // s'il y en a un, sinon le plus proche à venir. Jamais de repli sur une classe
+                // arbitraire quand rien n'est réellement programmé (transparence avant tout).
                 Builder(
                   builder: (context) {
                     final cm = _activeCreneau?['classeMatiere'];
-                    final classeObj =
-                        cm?['classe'] ?? _activeCreneau?['classe'];
-                    final classeNom =
-                        classeObj?['nom'] ??
-                        (_classes.isNotEmpty ? _classes[0]['nom'] : null);
-                    final classeIdVal =
-                        classeObj?['id'] ??
-                        (_classes.isNotEmpty ? _classes[0]['id'] : null);
+                    final classeObj = cm?['classe'] ?? _activeCreneau?['classe'];
+                    final classeNom = classeObj?['nom'];
+                    final classeIdVal = classeObj?['id'];
                     final cmIdVal = cm?['id'];
                     final resolvedClasseId = classeIdVal is int
                         ? classeIdVal
-                        : (classeIdVal != null
-                              ? int.tryParse(classeIdVal.toString())
-                              : null);
+                        : (classeIdVal != null ? int.tryParse(classeIdVal.toString()) : null);
                     final resolvedCmId = cmIdVal is int
                         ? cmIdVal
-                        : (cmIdVal != null
-                              ? int.tryParse(cmIdVal.toString())
-                              : null);
-                    final matiereNom =
-                        cm?['matiere']?['nom'] ?? 'Cours enseignant';
-                    final salleStr =
-                        _activeCreneau?['salle'] ?? 'Salle de cours';
-                    final hDebut = _activeCreneau?['heureDebut'] ?? '';
-                    final hFin = _activeCreneau?['heureFin'] ?? '';
-                    final horraireStr = hDebut.isNotEmpty && hFin.isNotEmpty
-                        ? '$hDebut - $hFin'
-                        : 'Créneau actif';
+                        : (cmIdVal != null ? int.tryParse(cmIdVal.toString()) : null);
+                    final matiereNom = cm?['matiere']?['nom'] ?? 'Cours';
+                    final salleStr = _activeCreneau?['salle'] ?? 'Salle de cours';
+                    String hhmm(dynamic h) {
+                      final s = (h ?? '').toString();
+                      return s.length >= 5 ? s.substring(0, 5) : s;
+                    }
+                    final hDebut = hhmm(_activeCreneau?['heureDebut']);
+                    final hFin = hhmm(_activeCreneau?['heureFin']);
+                    final horraireStr = hDebut.isNotEmpty && hFin.isNotEmpty ? '$hDebut - $hFin' : '';
+
+                    final aUnCreneau = classeNom != null;
+                    final statutLabel = !aUnCreneau
+                        ? 'AUCUN COURS PROGRAMMÉ'
+                        : (_creneauEnCours ? 'EN COURS MAINTENANT' : 'PROCHAIN COURS');
+                    final statutCouleur = !aUnCreneau
+                        ? AppTheme.inkMuted
+                        : (_creneauEnCours ? AppTheme.flagGreen : AppTheme.mil);
 
                     return Container(
                       padding: const EdgeInsets.all(20),
                       decoration: AppTheme.cardDecoration(
-                        borderColor: AppTheme.mil.withValues(alpha: 0.5),
+                        borderColor: aUnCreneau ? statutCouleur.withValues(alpha: 0.5) : AppTheme.border,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'GESTION DU COURS ACTIF',
-                            style: AppTheme.mono(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.inkMuted,
-                              letterSpacing: 1,
-                            ),
+                          Row(
+                            children: [
+                              if (aUnCreneau && _creneauEnCours)
+                                Container(
+                                  margin: const EdgeInsets.only(right: 6),
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(color: AppTheme.flagGreen, shape: BoxShape.circle),
+                                ),
+                              Text(
+                                statutLabel,
+                                style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.bold, color: statutCouleur, letterSpacing: 1),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            classeNom != null
-                                ? '$classeNom • $matiereNom'
-                                : 'Aucun cours actif actuellement',
-                            style: AppTheme.display(
-                              fontSize: 18,
-                              color: AppTheme.indigo,
-                            ),
+                            aUnCreneau ? '$classeNom • $matiereNom' : 'Rien de prévu pour le moment',
+                            style: AppTheme.display(fontSize: 18, color: AppTheme.indigo),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            classeNom != null
-                                ? '$salleStr • $horraireStr'
-                                : 'Sélectionnez une classe ci-dessous pour faire l\'appel',
-                            style: AppTheme.body(
-                              fontSize: 12,
-                              color: AppTheme.inkMuted,
-                            ),
+                            !aUnCreneau
+                                ? 'Consultez votre emploi du temps complet ci-dessous.'
+                                : _creneauEnCours
+                                    ? '$salleStr • $horraireStr'
+                                    : '$salleStr • ${_libelleProchain()} à $hDebut',
+                            style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
                           ),
                           const SizedBox(height: 16),
                           Row(
