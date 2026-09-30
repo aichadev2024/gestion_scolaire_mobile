@@ -9,7 +9,7 @@ class ApiConstants {
   ///   flutter build web --dart-define=API_BASE_URL=http://localhost:8089/api
   ///   flutter build apk --dart-define=API_BASE_URL=http://10.0.2.2:8089/api
   static const String _defaultUrl =
-      'https://gestion-scolaire-backend-x0hy.onrender.com/api';
+    'https://api.netaa-ecole.com/api';
 
   static const String productionUrl = String.fromEnvironment(
     'API_BASE_URL',
