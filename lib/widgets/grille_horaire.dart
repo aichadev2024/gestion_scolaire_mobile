@@ -97,27 +97,37 @@ class _BlocCreneau extends StatelessWidget {
       onTap: creneau.onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: border, width: creneau.enCours ? 1.6 : 1),
         ),
+        // Texte ancré en haut du bloc (comme un évènement d'agenda) plutôt que centré :
+        // sur un créneau long, un texte centré flotte au milieu d'un grand espace vide
+        // et donne une impression de bloc « vide » ou cassé.
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final grand = constraints.maxHeight > 44;
+            final h = constraints.maxHeight;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   creneau.label,
-                  maxLines: grand ? 2 : 1,
+                  maxLines: h > 58 ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTheme.body(fontSize: 12.5, fontWeight: FontWeight.w700, color: fg),
                 ),
-                if (grand && creneau.sousLabel != null)
+                if (h > 40)
+                  Text(
+                    '${creneau.heureDebut} – ${creneau.heureFin}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.body(fontSize: 10.5, fontWeight: FontWeight.w600, color: fg.withValues(alpha: 0.75)),
+                  ),
+                if (h > 62 && creneau.sousLabel != null)
                   Text(
                     creneau.sousLabel!,
                     maxLines: 1,
