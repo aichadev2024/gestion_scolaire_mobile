@@ -3,6 +3,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/subject_colors.dart';
+import '../../widgets/grille_horaire.dart';
 import 'prise_presence_screen.dart';
 import 'saisie_notes_screen.dart';
 
@@ -86,14 +87,18 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
 
           parsed[dayIdx]!.add({
             'heure': heureStr,
+            'heureDebut': hDebut,
+            'heureFin': hFin,
             'classe': classeNom,
             'matiere': matiereNom,
             'matiereId': matiereIdVal,
             'salle': salleStr,
-            'statut': 'À venir',
             'classeId': classeIdVal,
             'classeMatiereId': cmIdVal,
           });
+        }
+        for (final list in parsed.values) {
+          list.sort((a, b) => (a['heureDebut'] as String).compareTo(b['heureDebut'] as String));
         }
         setState(() {
           _scheduleByDay = parsed;
@@ -103,6 +108,88 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  bool _estEnCours(Map<String, dynamic> item) {
+    // weekday Dart : 1 = lundi … 7 = dimanche, aligné sur _selectedDayIndex (0 = lundi).
+    final maintenant = DateTime.now();
+    if (maintenant.weekday - 1 != _selectedDayIndex) return false;
+    final debut = item['heureDebut'] as String;
+    final fin = item['heureFin'] as String;
+    final nowStr = '${maintenant.hour.toString().padLeft(2, '0')}:${maintenant.minute.toString().padLeft(2, '0')}';
+    return nowStr.compareTo(debut) >= 0 && nowStr.compareTo(fin) < 0;
+  }
+
+  void _ouvrirActions(Map<String, dynamic> item) {
+    final cId = item['classeId'];
+    final cmId = item['classeMatiereId'];
+    final classeIdVal = cId is int ? cId : (cId != null ? int.tryParse(cId.toString()) : null);
+    final classeMatiereIdVal = cmId is int ? cmId : (cmId != null ? int.tryParse(cmId.toString()) : null);
+    final classeNom = item['classe']?.toString() ?? 'Classe';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${item['matiere']} • $classeNom', style: AppTheme.display(fontSize: 17, color: AppTheme.indigo)),
+              const SizedBox(height: 4),
+              Text('${item['heure']} — ${item['salle']}', style: AppTheme.body(fontSize: 13, color: AppTheme.inkMuted)),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PrisePresenceScreen(
+                              classeId: classeIdVal,
+                              classeMatiereId: classeMatiereIdVal,
+                              classeNom: classeNom,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                      label: const Text('Appel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SaisieNotesScreen(
+                              classeId: classeIdVal,
+                              classeMatiereId: classeMatiereIdVal,
+                              classeNom: classeNom,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.edit_note_rounded, size: 16),
+                      label: const Text('Notes'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -175,149 +262,25 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                       ? Center(
                           child: Text('Aucun cours programmé ce jour-là', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 14)),
                         )
-                      : ListView.builder(
+                      : SingleChildScrollView(
                           padding: const EdgeInsets.all(16),
-                          itemCount: activeCourses.length,
-                          itemBuilder: (context, index) {
-                            final item = activeCourses[index];
-                            final isNow = item['statut'] == 'En cours';
-                            final subj = SubjectColors.forMatiere(
-                              matiereId: item['matiereId'] as int?,
-                              nom: item['matiere'] as String?,
-                            );
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 14),
-                              padding: const EdgeInsets.all(18),
-                              decoration: AppTheme.cardDecoration(
-                                borderColor: isNow ? AppTheme.mil.withValues(alpha: 0.5) : subj.border,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.mil.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(Icons.access_time_rounded, size: 14, color: AppTheme.mil),
-                                            const SizedBox(width: 5),
-                                            Text(
-                                              item['heure']!,
-                                              style: AppTheme.body(fontWeight: FontWeight.w700, color: AppTheme.mil, fontSize: 13),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (isNow)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.flagGreen.withValues(alpha: 0.14),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            item['statut']!,
-                                            style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.flagGreen),
-                                          ),
-                                        ),
-                                    ],
+                          child: GrilleHoraire(
+                            creneaux: [
+                              for (final item in activeCourses)
+                                CreneauGrille(
+                                  heureDebut: item['heureDebut'] as String,
+                                  heureFin: item['heureFin'] as String,
+                                  label: item['matiere'] as String,
+                                  sousLabel: '${item['classe']} • ${item['salle']}',
+                                  couleur: SubjectColors.forMatiere(
+                                    matiereId: item['matiereId'] as int?,
+                                    nom: item['matiere'] as String?,
                                   ),
-                                  const SizedBox(height: 14),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        width: 10,
-                                        height: 10,
-                                        margin: const EdgeInsets.only(right: 8),
-                                        decoration: BoxDecoration(color: subj.fg, shape: BoxShape.circle),
-                                      ),
-                                      Expanded(
-                                        child: Text.rich(
-                                          TextSpan(children: [
-                                            TextSpan(
-                                              text: item['matiere']!,
-                                              style: AppTheme.display(fontSize: 17, color: subj.fg),
-                                            ),
-                                            TextSpan(
-                                              text: ' • ${item['classe']!}',
-                                              style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.indigo),
-                                            ),
-                                          ]),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.inkMuted),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        item['salle']!,
-                                        style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {
-                                            final cId = item['classeId'];
-                                            final cmId = item['classeMatiereId'];
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) => PrisePresenceScreen(
-                                                  classeId: cId is int ? cId : (cId != null ? int.tryParse(cId.toString()) : null),
-                                                  classeMatiereId: cmId is int ? cmId : (cmId != null ? int.tryParse(cmId.toString()) : null),
-                                                  classeNom: item['classe']?.toString() ?? 'Classe',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
-                                          label: const Text('Appel'),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: OutlinedButton.icon(
-                                          onPressed: () {
-                                            final cId = item['classeId'];
-                                            final cmId = item['classeMatiereId'];
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) => SaisieNotesScreen(
-                                                  classeId: cId is int ? cId : (cId != null ? int.tryParse(cId.toString()) : null),
-                                                  classeMatiereId: cmId is int ? cmId : (cmId != null ? int.tryParse(cmId.toString()) : null),
-                                                  classeNom: item['classe']?.toString() ?? 'Classe',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          icon: const Icon(Icons.edit_note_rounded, size: 16),
-                                          label: const Text('Notes'),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                                  enCours: _estEnCours(item),
+                                  onTap: () => _ouvrirActions(item),
+                                ),
+                            ],
+                          ),
                         ),
             ),
           ],

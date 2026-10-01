@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/subject_colors.dart';
+import '../../widgets/grille_horaire.dart';
 
 class EmploiDuTempsEleveScreen extends StatefulWidget {
   final String eleveNom;
@@ -66,8 +67,9 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
             dayIdx = 5;
           }
 
-          final hDebut = item['heureDebut'] ?? '';
-          final hFin = item['heureFin'] ?? '';
+          String hhmm(String h) => h.length >= 5 ? h.substring(0, 5) : h;
+          final hDebut = hhmm((item['heureDebut'] ?? '').toString());
+          final hFin = hhmm((item['heureFin'] ?? '').toString());
           final heureStr = hDebut.isNotEmpty && hFin.isNotEmpty ? '$hDebut - $hFin' : (hDebut.isNotEmpty ? hDebut : '08:00');
           final matiereObj = item['classeMatiere']?['matiere'];
           final matiereNom = matiereObj?['nom'] ?? item['libellePause'] ?? 'Cours';
@@ -78,11 +80,17 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
 
           parsed[dayIdx]!.add({
             'heure': heureStr,
+            'heureDebut': hDebut.isNotEmpty ? hDebut : '08:00',
+            'heureFin': hFin.isNotEmpty ? hFin : '09:00',
             'matiere': matiereNom,
             'matiereId': matiereIdVal,
             'prof': profNom,
             'salle': salleStr,
+            'isPause': item['classeMatiere'] == null,
           });
+        }
+        for (final list in parsed.values) {
+          list.sort((a, b) => (a['heureDebut'] as String).compareTo(b['heureDebut'] as String));
         }
         setState(() {
           _scheduleByDay = parsed;
@@ -93,6 +101,42 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  void _ouvrirDetail(Map<String, dynamic> item) {
+    final isPause = item['isPause'] as bool;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item['matiere'] as String, style: AppTheme.display(fontSize: 17, color: AppTheme.indigo)),
+              const SizedBox(height: 10),
+              _ligneDetail(Icons.access_time_rounded, item['heure'] as String),
+              if (item['salle'] != null) _ligneDetail(Icons.location_on_outlined, item['salle'] as String),
+              if (!isPause && item['prof'] != null) _ligneDetail(Icons.person_outline_rounded, item['prof'] as String),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _ligneDetail(IconData icon, String texte) => Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: AppTheme.inkMuted),
+            const SizedBox(width: 8),
+            Text(texte, style: AppTheme.body(fontSize: 13, color: AppTheme.inkMuted)),
+          ],
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -162,55 +206,26 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
                       ? Center(
                           child: Text('Aucun cours ce jour-là', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 14)),
                         )
-                      : ListView.builder(
+                      : SingleChildScrollView(
                           padding: const EdgeInsets.all(16),
-                          itemCount: activeCourses.length,
-                          itemBuilder: (context, index) {
-                            final item = activeCourses[index];
-                            final subj = SubjectColors.forMatiere(
-                              matiereId: item['matiereId'] as int?,
-                              nom: item['matiere'] as String?,
-                            );
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(16),
-                              decoration: AppTheme.cardDecoration(borderColor: subj.border),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: subj.bg,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(Icons.menu_book_rounded, color: subj.fg, size: 24),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item['matiere']!,
-                                          style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: subj.fg),
+                          child: GrilleHoraire(
+                            creneaux: [
+                              for (final item in activeCourses)
+                                CreneauGrille(
+                                  heureDebut: item['heureDebut'] as String,
+                                  heureFin: item['heureFin'] as String,
+                                  label: item['matiere'] as String,
+                                  sousLabel: item['salle'] as String?,
+                                  couleur: (item['isPause'] as bool)
+                                      ? null
+                                      : SubjectColors.forMatiere(
+                                          matiereId: item['matiereId'] as int?,
+                                          nom: item['matiere'] as String?,
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '${item['heure']!} • ${item['salle']!}',
-                                          style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted, fontWeight: FontWeight.w600),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          item['prof']!,
-                                          style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                                  onTap: () => _ouvrirDetail(item),
+                                ),
+                            ],
+                          ),
                         ),
             ),
           ],
