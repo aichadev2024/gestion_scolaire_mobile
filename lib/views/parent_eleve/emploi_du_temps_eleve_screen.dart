@@ -21,7 +21,6 @@ class EmploiDuTempsEleveScreen extends StatefulWidget {
 }
 
 class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
-  int _selectedDayIndex = 0;
   bool _isLoading = true;
 
   final List<String> _jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
@@ -140,7 +139,7 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeCourses = _scheduleByDay[_selectedDayIndex] ?? [];
+    final aujourdHui = DateTime.now().weekday - 1; // 0 = lundi
 
     return Scaffold(
       backgroundColor: AppTheme.paper,
@@ -159,77 +158,34 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-
-            SizedBox(
-              height: 44,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _jours.length,
-                itemBuilder: (context, index) {
-                  final isSelected = index == _selectedDayIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedDayIndex = index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.only(right: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.indigo : AppTheme.surfaceMuted,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? AppTheme.indigo : AppTheme.border,
-                        ),
-                      ),
-                      child: Text(
-                        _jours[index],
-                        style: AppTheme.body(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? AppTheme.paper : AppTheme.inkMuted,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.indigo))
-                  : activeCourses.isEmpty
-                      ? Center(
-                          child: Text('Aucun cours ce jour-là', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 14)),
-                        )
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: GrilleHoraire(
-                            creneaux: [
-                              for (final item in activeCourses)
-                                CreneauGrille(
-                                  heureDebut: item['heureDebut'] as String,
-                                  heureFin: item['heureFin'] as String,
-                                  label: item['matiere'] as String,
-                                  sousLabel: item['salle'] as String?,
-                                  couleur: (item['isPause'] as bool)
-                                      ? null
-                                      : SubjectColors.forMatiere(
-                                          matiereId: item['matiereId'] as int?,
-                                          nom: item['matiere'] as String?,
-                                        ),
-                                  onTap: () => _ouvrirDetail(item),
-                                ),
-                            ],
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.indigo))
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: GrilleHoraireSemaine(
+                  jours: _jours,
+                  jourSurligne: aujourdHui,
+                  parJour: {
+                    for (final entry in _scheduleByDay.entries)
+                      entry.key: [
+                        for (final item in entry.value)
+                          CreneauGrille(
+                            heureDebut: item['heureDebut'] as String,
+                            heureFin: item['heureFin'] as String,
+                            label: item['matiere'] as String,
+                            sousLabel: item['salle'] as String?,
+                            couleur: (item['isPause'] as bool)
+                                ? null
+                                : SubjectColors.forMatiere(
+                                    matiereId: item['matiereId'] as int?,
+                                    nom: item['matiere'] as String?,
+                                  ),
+                            onTap: () => _ouvrirDetail(item),
                           ),
-                        ),
-            ),
-          ],
-        ),
+                      ],
+                  },
+                ),
+              ),
       ),
     );
   }

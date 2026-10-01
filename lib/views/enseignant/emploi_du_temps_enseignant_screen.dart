@@ -17,7 +17,6 @@ class EmploiDuTempsEnseignantScreen extends StatefulWidget {
 }
 
 class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantScreen> {
-  int _selectedDayIndex = 0; // 0 = Lundi, 1 = Mardi, ...
   bool _isLoading = true;
 
   final List<String> _jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
@@ -110,10 +109,10 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
     }
   }
 
-  bool _estEnCours(Map<String, dynamic> item) {
-    // weekday Dart : 1 = lundi … 7 = dimanche, aligné sur _selectedDayIndex (0 = lundi).
+  bool _estEnCours(int dayIndex, Map<String, dynamic> item) {
+    // weekday Dart : 1 = lundi … 7 = dimanche (0 = lundi côté _scheduleByDay).
     final maintenant = DateTime.now();
-    if (maintenant.weekday - 1 != _selectedDayIndex) return false;
+    if (maintenant.weekday - 1 != dayIndex) return false;
     final debut = item['heureDebut'] as String;
     final fin = item['heureFin'] as String;
     final nowStr = '${maintenant.hour.toString().padLeft(2, '0')}:${maintenant.minute.toString().padLeft(2, '0')}';
@@ -194,7 +193,7 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
 
   @override
   Widget build(BuildContext context) {
-    final activeCourses = _scheduleByDay[_selectedDayIndex] ?? [];
+    final aujourdHui = DateTime.now().weekday - 1; // 0 = lundi
 
     return Scaffold(
       backgroundColor: AppTheme.paper,
@@ -206,85 +205,33 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-
-            // Sélecteur de jour façon « segmented control » : piste neutre, pastille active
-            // blanche avec ombre douce — moins de blocs de couleur pleins qu'un bouton par jour.
-            Container(
-              height: 48,
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceMuted,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _jours.length,
-                itemBuilder: (context, index) {
-                  final isSelected = index == _selectedDayIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedDayIndex = index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOut,
-                      margin: const EdgeInsets.only(right: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.surface : Colors.transparent,
-                        borderRadius: BorderRadius.circular(11),
-                        boxShadow: isSelected
-                            ? [BoxShadow(color: AppTheme.charcoal.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 2))]
-                            : null,
-                      ),
-                      child: Text(
-                        _jours[index],
-                        style: AppTheme.body(
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? AppTheme.indigo : AppTheme.inkMuted,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.indigo))
-                  : activeCourses.isEmpty
-                      ? Center(
-                          child: Text('Aucun cours programmé ce jour-là', style: AppTheme.body(color: AppTheme.inkMuted, fontSize: 14)),
-                        )
-                      : SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: GrilleHoraire(
-                            creneaux: [
-                              for (final item in activeCourses)
-                                CreneauGrille(
-                                  heureDebut: item['heureDebut'] as String,
-                                  heureFin: item['heureFin'] as String,
-                                  label: item['matiere'] as String,
-                                  sousLabel: '${item['classe']} • ${item['salle']}',
-                                  couleur: SubjectColors.forMatiere(
-                                    matiereId: item['matiereId'] as int?,
-                                    nom: item['matiere'] as String?,
-                                  ),
-                                  enCours: _estEnCours(item),
-                                  onTap: () => _ouvrirActions(item),
-                                ),
-                            ],
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppTheme.indigo))
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: GrilleHoraireSemaine(
+                  jours: _jours,
+                  jourSurligne: aujourdHui,
+                  parJour: {
+                    for (final entry in _scheduleByDay.entries)
+                      entry.key: [
+                        for (final item in entry.value)
+                          CreneauGrille(
+                            heureDebut: item['heureDebut'] as String,
+                            heureFin: item['heureFin'] as String,
+                            label: item['matiere'] as String,
+                            sousLabel: '${item['classe']} • ${item['salle']}',
+                            couleur: SubjectColors.forMatiere(
+                              matiereId: item['matiereId'] as int?,
+                              nom: item['matiere'] as String?,
+                            ),
+                            enCours: _estEnCours(entry.key, item),
+                            onTap: () => _ouvrirActions(item),
                           ),
-                        ),
-            ),
-          ],
-        ),
+                      ],
+                  },
+                ),
+              ),
       ),
     );
   }
