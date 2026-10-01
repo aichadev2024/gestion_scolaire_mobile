@@ -29,7 +29,7 @@ class GrilleHoraire extends StatelessWidget {
   final List<CreneauGrille> creneaux;
   final double pxParMinute;
 
-  const GrilleHoraire({super.key, required this.creneaux, this.pxParMinute = 1.3});
+  const GrilleHoraire({super.key, required this.creneaux, this.pxParMinute = 0.8});
 
   static int _enMinutes(String hhmm) {
     final p = hhmm.split(':');
@@ -73,7 +73,7 @@ class GrilleHoraire extends StatelessWidget {
               top: (_enMinutes(c.heureDebut) - gridStart) * pxParMinute + 2,
               left: 46,
               right: 2,
-              height: ((_enMinutes(c.heureFin) - _enMinutes(c.heureDebut)) * pxParMinute - 4).clamp(26, double.infinity),
+              height: ((_enMinutes(c.heureFin) - _enMinutes(c.heureDebut)) * pxParMinute - 4).clamp(24, double.infinity),
               child: _BlocCreneau(creneau: c),
             ),
         ],
@@ -97,7 +97,7 @@ class _BlocCreneau extends StatelessWidget {
       onTap: creneau.onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(8),
@@ -116,18 +116,18 @@ class _BlocCreneau extends StatelessWidget {
               children: [
                 Text(
                   creneau.label,
-                  maxLines: h > 58 ? 2 : 1,
+                  maxLines: h > 46 ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTheme.body(fontSize: 12.5, fontWeight: FontWeight.w700, color: fg),
                 ),
-                if (h > 40)
+                if (h > 32)
                   Text(
                     '${creneau.heureDebut} – ${creneau.heureFin}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTheme.body(fontSize: 10.5, fontWeight: FontWeight.w600, color: fg.withValues(alpha: 0.75)),
                   ),
-                if (h > 62 && creneau.sousLabel != null)
+                if (h > 50 && creneau.sousLabel != null)
                   Text(
                     creneau.sousLabel!,
                     maxLines: 1,
