@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/subject_colors.dart';
 
 class EmploiDuTempsEleveScreen extends StatefulWidget {
   final String eleveNom;
@@ -24,7 +25,7 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
 
   final List<String> _jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
-  Map<int, List<Map<String, String>>> _scheduleByDay = {
+  Map<int, List<Map<String, dynamic>>> _scheduleByDay = {
     0: [],
     1: [],
     2: [],
@@ -47,7 +48,7 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
     try {
       final res = await ApiService.get('/emplois-du-temps/classe/${widget.classeId}');
       if (res is List && res.isNotEmpty && mounted) {
-        final Map<int, List<Map<String, String>>> parsed = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []};
+        final Map<int, List<Map<String, dynamic>>> parsed = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []};
         for (var item in res) {
           final jour = (item['jourSemaine'] ?? '').toString().toUpperCase();
           int dayIdx = 0;
@@ -70,6 +71,7 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
           final heureStr = hDebut.isNotEmpty && hFin.isNotEmpty ? '$hDebut - $hFin' : (hDebut.isNotEmpty ? hDebut : '08:00');
           final matiereObj = item['classeMatiere']?['matiere'];
           final matiereNom = matiereObj?['nom'] ?? item['libellePause'] ?? 'Cours';
+          final matiereIdVal = matiereObj?['id'];
           final profObj = item['classeMatiere']?['enseignant']?['profil'];
           final profNom = profObj != null ? 'Prof. ${profObj['prenom'] ?? ''} ${profObj['nom'] ?? ''}'.trim() : 'Enseignant';
           final salleStr = item['salle'] ?? 'Salle de cours';
@@ -77,6 +79,7 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
           parsed[dayIdx]!.add({
             'heure': heureStr,
             'matiere': matiereNom,
+            'matiereId': matiereIdVal,
             'prof': profNom,
             'salle': salleStr,
           });
@@ -164,19 +167,23 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
                           itemCount: activeCourses.length,
                           itemBuilder: (context, index) {
                             final item = activeCourses[index];
+                            final subj = SubjectColors.forMatiere(
+                              matiereId: item['matiereId'] as int?,
+                              nom: item['matiere'] as String?,
+                            );
                             return Container(
                               margin: const EdgeInsets.only(bottom: 12),
                               padding: const EdgeInsets.all(16),
-                              decoration: AppTheme.cardDecoration(),
+                              decoration: AppTheme.cardDecoration(borderColor: subj.border),
                               child: Row(
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.mil.withValues(alpha: 0.14),
+                                      color: subj.bg,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Icon(Icons.menu_book_rounded, color: AppTheme.laterite, size: 24),
+                                    child: Icon(Icons.menu_book_rounded, color: subj.fg, size: 24),
                                   ),
                                   const SizedBox(width: 14),
                                   Expanded(
@@ -185,12 +192,12 @@ class _EmploiDuTempsEleveScreenState extends State<EmploiDuTempsEleveScreen> {
                                       children: [
                                         Text(
                                           item['matiere']!,
-                                          style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.ink),
+                                          style: AppTheme.body(fontSize: 15, fontWeight: FontWeight.bold, color: subj.fg),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           '${item['heure']!} • ${item['salle']!}',
-                                          style: AppTheme.body(fontSize: 12, color: AppTheme.laterite, fontWeight: FontWeight.w600),
+                                          style: AppTheme.body(fontSize: 12, color: AppTheme.inkMuted, fontWeight: FontWeight.w600),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(

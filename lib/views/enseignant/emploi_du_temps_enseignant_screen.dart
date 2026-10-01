@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/subject_colors.dart';
 import 'prise_presence_screen.dart';
 import 'saisie_notes_screen.dart';
 
@@ -80,12 +81,14 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
 
           final matiereObj = cm?['matiere'];
           final matiereNom = matiereObj?['nom'] ?? item['libellePause'] ?? 'Cours';
+          final matiereIdVal = matiereObj?['id'];
           final salleStr = item['salle'] ?? 'Salle 104';
 
           parsed[dayIdx]!.add({
             'heure': heureStr,
             'classe': classeNom,
             'matiere': matiereNom,
+            'matiereId': matiereIdVal,
             'salle': salleStr,
             'statut': 'À venir',
             'classeId': classeIdVal,
@@ -178,12 +181,16 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                           itemBuilder: (context, index) {
                             final item = activeCourses[index];
                             final isNow = item['statut'] == 'En cours';
+                            final subj = SubjectColors.forMatiere(
+                              matiereId: item['matiereId'] as int?,
+                              nom: item['matiere'] as String?,
+                            );
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 14),
                               padding: const EdgeInsets.all(18),
                               decoration: AppTheme.cardDecoration(
-                                borderColor: isNow ? AppTheme.mil.withValues(alpha: 0.5) : AppTheme.border,
+                                borderColor: isNow ? AppTheme.mil.withValues(alpha: 0.5) : subj.border,
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,9 +231,30 @@ class _EmploiDuTempsEnseignantScreenState extends State<EmploiDuTempsEnseignantS
                                     ],
                                   ),
                                   const SizedBox(height: 14),
-                                  Text(
-                                    '${item['classe']!} • ${item['matiere']!}',
-                                    style: AppTheme.display(fontSize: 17, color: AppTheme.indigo),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 10,
+                                        height: 10,
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(color: subj.fg, shape: BoxShape.circle),
+                                      ),
+                                      Expanded(
+                                        child: Text.rich(
+                                          TextSpan(children: [
+                                            TextSpan(
+                                              text: item['matiere']!,
+                                              style: AppTheme.display(fontSize: 17, color: subj.fg),
+                                            ),
+                                            TextSpan(
+                                              text: ' • ${item['classe']!}',
+                                              style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.indigo),
+                                            ),
+                                          ]),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 4),
                                   Row(
