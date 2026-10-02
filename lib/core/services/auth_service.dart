@@ -25,6 +25,8 @@ class AuthService {
         'identifiant': username,
         'username': username,
         'motDePasse': password,
+        // Permet au serveur de refuser la connexion si le plan de l'école n'inclut pas l'appli mobile.
+        'client': 'mobile',
       });
 
       if (data != null && data['token'] != null) {
