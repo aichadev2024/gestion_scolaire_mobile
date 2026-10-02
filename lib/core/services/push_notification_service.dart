@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
 
@@ -21,7 +22,7 @@ class PushNotificationService {
   static bool _initialized = false;
 
   static Future<void> init() async {
-    if (_initialized) return;
+    if (kIsWeb || _initialized) return; // pas de FCM sur la version web de l'app
     _initialized = true;
 
     await _localNotifications.initialize(
@@ -58,6 +59,7 @@ class PushNotificationService {
   /// Récupère le token FCM courant et l'enregistre côté backend pour l'utilisateur connecté.
   /// Échec silencieux (log seulement) : l'absence de push ne doit jamais bloquer l'usage de l'app.
   static Future<void> registerToken() async {
+    if (kIsWeb) return;
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null) return;
