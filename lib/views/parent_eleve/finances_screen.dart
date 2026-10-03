@@ -319,12 +319,16 @@ class _FinancesScreenState extends State<FinancesScreen> {
         ? Icons.how_to_reg_rounded
         : type == 'MENSUALITE'
             ? Icons.calendar_month_rounded
-            : Icons.receipt_long_rounded;
+            : type == 'ARRIERES'
+                ? Icons.history_rounded
+                : Icons.receipt_long_rounded;
     final String typeLibelle = type == 'INSCRIPTION'
         ? 'Inscription'
         : type == 'MENSUALITE'
             ? 'Mensualité'
-            : 'Frais';
+            : type == 'ARRIERES'
+                ? 'Arriérés'
+                : 'Frais';
 
     late final String etat;
     late final Color couleur;
@@ -365,7 +369,7 @@ class _FinancesScreenState extends State<FinancesScreen> {
               children: [
                 Text((l['titre'] ?? typeLibelle).toString(), style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.ink)),
                 const SizedBox(height: 2),
-                Text('$typeLibelle • échéance ${_date(l['dateEcheance'])}', style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted)),
+                Text(type == 'ARRIERES' ? 'Années précédentes' : '$typeLibelle • échéance ${_date(l['dateEcheance'])}', style: AppTheme.body(fontSize: 11, color: AppTheme.inkMuted)),
                 const SizedBox(height: 6),
                 Text(
                   statut == 'PAYE' ? '${_fmt(montant)} $_devise réglés' : 'Payé ${_fmt(paye)} sur ${_fmt(montant)} $_devise • reste ${_fmt(reste)}',
